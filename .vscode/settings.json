@@ -8,5 +8,8 @@
         "activityBarBadge.foreground": "#e7e7e7",
         "sash.hoverBorder": "#dbd393"
     },
-    "peacock.color": "#cec46d"
+    "peacock.color": "#cec46d",
+    "conventionalCommits.scopes": [
+        "frontend"
+    ]
 }

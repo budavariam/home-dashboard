@@ -2,7 +2,9 @@
 
 Basic Smarthome dashboard
 
-![Exanmple](./example.png)
+![Example](./example.png)
+
+[LIVE demo](https://budavariam.github.io/home-dashboard/)
 
 ## Getting started
 
