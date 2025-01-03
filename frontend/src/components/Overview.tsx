@@ -29,7 +29,7 @@ const getBatteryColor = (battery?: number) => {
   return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
-const StatBox = ({ label, value, unit, colorClass }: { 
+const StatBox = ({ label, value, unit, colorClass }: {
   label: string;
   value: string | number;
   unit: string;
@@ -48,17 +48,14 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
         <h1 className="text-2xl font-bold">Sensor Dashboard</h1>
         <button
           onClick={() => refetch()}
+          disabled={isFetching}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
         >
-          Refresh Now
+          {isFetching ? (
+            "Fetching data..."
+          ) : "Refresh Now"}
         </button>
       </div>
-
-      {isFetching && (
-        <div className="text-gray-500 dark:text-gray-400 text-center py-4">
-          Fetching data...
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data?.map((sensor) => {
