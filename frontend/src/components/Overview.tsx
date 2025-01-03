@@ -1,15 +1,5 @@
+import { SensorReading } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-
-interface SensorReading {
-  n: string;
-  ts: number;
-  r?: {
-    tmp?: number;
-    hum?: number;
-    bat?: number;
-    pow?: number;
-  };
-}
 
 interface OverviewProps {
   isFetching: boolean;
