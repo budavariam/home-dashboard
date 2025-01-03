@@ -7,7 +7,7 @@ export interface SensorReading {
         pow: number;  // power
         tmp: number;  // temperature
     };
-    ts: string;  // timestamp
+    ts: number;  // timestamp
 }
 
 export const DEFAULT_VALUE: SensorReading = Object.freeze({
@@ -19,7 +19,7 @@ export const DEFAULT_VALUE: SensorReading = Object.freeze({
         pow: 0,
         tmp: 0,
     },
-    ts: "2025-01-01"
+    ts: 0
 })
 
 export interface ApiParams {
