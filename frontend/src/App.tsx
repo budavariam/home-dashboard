@@ -49,7 +49,7 @@ const App = () => {
       throw new Error('Missing API parameters or token.');
     }
 
-    const url = `https://api.thinger.io/v1/users/${apiParams.user}/buckets/${apiParams.bucket}/data`;
+    const url = `https://api.thinger.io/v1/users/${apiParams.user}/buckets/${apiParams.bucket}/data?items=1&sort=desc`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
