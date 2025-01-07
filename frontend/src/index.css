@@ -71,3 +71,7 @@
     @apply bg-gray-900 text-white; /* Dark mode styles */
   }
 }
+
+body {
+  overscroll-behavior: none;
+}

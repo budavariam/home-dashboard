@@ -1,79 +1,67 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { ApiParams, DEFAULT_VALUE, SensorReading } from './types';
-import { Overview } from './components/Overview';
-import { ExamplePage } from './components/ExamplePage';
+import { Outlet, NavLink } from 'react-router-dom';
+import { useSensorParams } from './components/context/ParamContext';
+import { useMockData } from './components/context/MockDataContext';
+import { Footer } from './components/Footer';
 
+export const App = () => {
+    const { token, apiParams } = useSensorParams();
+    const { useMock } = useMockData();
+    const isAuthenticated = useMock || (token && apiParams.user && apiParams.bucket);
 
-
-const App = () => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [mappings, setMappings] = useState<Record<string, string>>(
-    JSON.parse(localStorage.getItem('mappings') || '{}')
-  );
-  const [apiParams, setApiParams] = useState<ApiParams>({
-    user: null,
-    bucket: null,
-  });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    const tokenParam = params.get('token');
-    if (tokenParam) {
-      setToken(tokenParam);
-      localStorage.setItem('token', tokenParam);
-    }
-
-    const mappingsParam = params.get('mappings');
-    if (mappingsParam) {
-      const parsedMappings = mappingsParam.split(';').reduce((acc, item) => {
-        const [key, value] = item.split(':');
-        acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>);
-      setMappings(parsedMappings);
-      localStorage.setItem('mappings', JSON.stringify(parsedMappings));
-    }
-
-    const userParam = params.get('user');
-    const bucketParam = params.get('bucket');
-    if (userParam && bucketParam) {
-      setApiParams({ user: userParam, bucket: bucketParam });
-    }
-  }, []);
-
-  const fetchData = async (): Promise<SensorReading[]> => {
-    if (!apiParams.user || !apiParams.bucket || !token) {
-      throw new Error('Missing API parameters or token.');
-    }
-
-    const url = `https://api.thinger.io/v1/users/${apiParams.user}/buckets/${apiParams.bucket}/data?items=1&sort=desc`;
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // Get only the last value from the bucket, which contains the array of sensor readings
-    if (response.data.length == 0) {
-      throw new Error('Empty bucket.');
-    }
-
-    return response.data[0]?.val?.readings ?? DEFAULT_VALUE;
-  };
-
-  const { data, refetch, isFetching } = useQuery({
-    queryKey: ['fetchData', apiParams, token],
-    queryFn: fetchData,
-    enabled: !!token && !!apiParams.user && !!apiParams.bucket,
-    refetchInterval: 60000, // Refetch every 1 minute
-  });
-
-  if (!token || !apiParams.user || !apiParams.bucket) {
-    return <ExamplePage />
-  }
-
-  return <Overview isFetching={isFetching} data={data} mappings={mappings} refetch={refetch} />;
+    return (
+        <div className="min-h-screen ">
+            <nav className="bg-gray-800 text-white p-4">
+                <ul className="flex gap-4">
+                    <li>
+                        <NavLink
+                            to="."
+                            className={({ isActive }) =>
+                                isActive ? 'text-blue-400' : 'hover:text-blue-400'
+                            }
+                        >
+                            Home
+                        </NavLink>
+                    </li>
+                    {isAuthenticated && (
+                        <>
+                            <li>
+                                <NavLink
+                                    to="dashboard"
+                                    className={({ isActive }) =>
+                                        isActive ? 'text-blue-400' : 'hover:text-blue-400'
+                                    }
+                                >
+                                    Dashboard
+                                </NavLink>
+                            </li>
+                            <li>
+                                <NavLink
+                                    to="history"
+                                    className={({ isActive }) =>
+                                        isActive ? 'text-blue-400' : 'hover:text-blue-400'
+                                    }
+                                >
+                                    History
+                                </NavLink>
+                            </li>
+                        </>
+                    )}
+                    <li>
+                        <NavLink
+                            to="mock"
+                            className={({ isActive }) =>
+                                isActive ? 'text-blue-400' : 'hover:text-blue-400'
+                            }
+                        >
+                            Mock
+                        </NavLink>
+                    </li>
+                </ul>
+            </nav>
+            <main className="p-4">
+                <Outlet />
+            </main>
+            <Footer />
+        </div>
+    );
 };
-
-export default App;
