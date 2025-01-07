@@ -59,7 +59,6 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data?.map((sensor) => {
-          debugger
           const mappedName = mappings[sensor.n] || sensor.n;
           const date = new Date(sensor.ts);
           const formattedTime = date.toLocaleTimeString();
