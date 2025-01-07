@@ -15,7 +15,7 @@ export const App = () => {
                     <li>
                         <NavLink
                             to="."
-                            className={({ isActive }) =>
+                            className={({ isActive }: {isActive: boolean}) =>
                                 isActive ? 'text-blue-400' : 'hover:text-blue-400'
                             }
                         >
@@ -27,7 +27,7 @@ export const App = () => {
                             <li>
                                 <NavLink
                                     to="dashboard"
-                                    className={({ isActive }) =>
+                                    className={({ isActive }: {isActive: boolean}) =>
                                         isActive ? 'text-blue-400' : 'hover:text-blue-400'
                                     }
                                 >
@@ -37,7 +37,7 @@ export const App = () => {
                             <li>
                                 <NavLink
                                     to="history"
-                                    className={({ isActive }) =>
+                                    className={({ isActive }: {isActive: boolean}) =>
                                         isActive ? 'text-blue-400' : 'hover:text-blue-400'
                                     }
                                 >
@@ -49,7 +49,7 @@ export const App = () => {
                     <li>
                         <NavLink
                             to="mock"
-                            className={({ isActive }) =>
+                            className={({ isActive }: {isActive: boolean}) =>
                                 isActive ? 'text-blue-400' : 'hover:text-blue-400'
                             }
                         >
