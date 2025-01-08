@@ -39,5 +39,5 @@ export const fetchHistoricalData = async (
         }
     });
 
-    return response.data;
+    return response.data.reverse();
 };
