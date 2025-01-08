@@ -37,6 +37,7 @@ export const fetchHistoricalData = async (
         headers: { Authorization: `Bearer ${token}` },
         params: {
             sort: "desc",
+            items: 4 * TIME_RANGES[timeRange] / (3600 * 1000),
             min_ts,
             max_ts
         }

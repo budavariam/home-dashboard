@@ -154,7 +154,9 @@ const HistoricalChart: React.FC = () => {
                 backgroundColor: `${colorMap[device]}80`,
                 tension: 0.4,
                 borderDash: metric.borderDash,
-                spanGaps: true, // Connect points across gaps
+                spanGaps: true,
+                pointRadius: 2,
+                pointHoverRadius: 4,
             }));
     };
 
@@ -180,6 +182,8 @@ const HistoricalChart: React.FC = () => {
                     color: "#9CA3AF",
                     maxRotation: 45,
                     minRotation: 45,
+                    autoSkip: true,
+                    maxTicksLimit: 15,
                 },
                 grid: { color: "#4B5563" },
             },
@@ -280,12 +284,20 @@ const HistoricalChart: React.FC = () => {
                     <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-center">
                             <span className="text-gray-700 dark:text-gray-300 font-medium">Devices</span>
-                            <button
-                                onClick={() => setSelectedDevices(Object.keys(groupedData))}
-                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                                Select All
-                            </button>
+                            <span>
+                                <button
+                                    onClick={() => setSelectedDevices(Object.keys(groupedData))}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline mr-2"
+                                >
+                                    Select All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedDevices([])}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Deselect All
+                                </button>
+                            </span>
                         </div>
                         <div className="flex flex-wrap gap-3">
                             {Object.keys(groupedData).map((device) => (
