@@ -131,10 +131,14 @@ function LandingPage() {
 
             <div className="mt-6 text-gray-600 dark:text-gray-400 text-sm">
                 <div className="mb-3">Example URL format:</div>
-                <code className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                <code
+                    className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded break-words w-full leading-8"
+                    style={{ wordBreak: 'break-word' }}
+                >
                     ?token=YOUR_TOKEN&user=YOUR_USER&bucket=YOUR_BUCKET&mappings=Sensor_0:Room1;Sensor_1:Room2
                 </code>
             </div>
+
         </div>
     );
 }
