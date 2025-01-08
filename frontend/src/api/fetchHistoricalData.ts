@@ -3,10 +3,13 @@ import { ApiResponse } from "@/types";
 import { TimeRange } from "../types";
 
 const TIME_RANGES: Record<TimeRange, number> = {
-    "1h": 3600000,
-    "6h": 21600000,
-    "12h": 43200000,
-    "24h": 86400000
+    "1h": 3600 * 1000,
+    "6h": 6 * 3600 * 1000,
+    "12h": 12 * 3600 * 1000,
+    "24h": 24 * 3600 * 1000,
+    "48h": 48 * 3600 * 1000,
+    "1w": 7 * 24 * 3600 * 1000,
+    "2w": 14 * 24 * 3600 * 1000,
 };
 
 export const fetchHistoricalData = async (
@@ -38,6 +41,8 @@ export const fetchHistoricalData = async (
             max_ts
         }
     });
-
+    if (response.data.length === 0) {
+        return []
+    }
     return response.data.reverse();
 };

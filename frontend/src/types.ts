@@ -34,4 +34,4 @@ export interface ApiResponse {
     ts?: number;
 }
 
-export type TimeRange = "1h" | "6h" | "12h" | "24h";
+export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w";
