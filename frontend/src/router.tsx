@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createHashRouter, Navigate } from 'react-router-dom';
 import { LandingPage } from './components/LandingPage';
 import { App } from './App';
 import { useSensorParams } from './components/context/ParamContext';
@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return children;
 };
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
     {
         path: '/',
         element: <App />,
@@ -57,5 +57,5 @@ export const router = createBrowserRouter([
         ],
     },
 ], {
-    basename: '/home-dashboard'
+    // basename: '/home-dashboard'
 });
