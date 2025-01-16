@@ -45,6 +45,20 @@ const TIME_RANGES = [
 
 const COLORS = ["#3b82f6", "#f97316", "#10b981", "#eab308", "#8b5cf6"];
 
+const formatTimestamp = (ts: number, timeRange: TimeRange) => {
+    const date = new Date(ts);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+
+    if (["48h", "1w", "2w"].includes(timeRange)) {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${month}.${day} ${timeStr}`;
+    }
+    return timeStr;
+};
+
 const HistoricalChart: React.FC = () => {
     const [timeRange, setTimeRange] = useState<TimeRange>("6h");
     const [selectedMetrics, setSelectedMetrics] = useState<Record<MetricKey, boolean>>({
@@ -63,29 +77,19 @@ const HistoricalChart: React.FC = () => {
     const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange);
     const { mappings } = useSensorParams();
 
-    const formatTimestamp = (ts: number) => {
-        const date = new Date(ts);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const timeStr = `${hours}:${minutes}`;
-
-        if (["48h", "1w", "2w"].includes(timeRange)) {
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${month}.${day} ${timeStr}`;
-        }
-        return timeStr;
-    };
-
     const groupedData = React.useMemo(() => {
-        const readings = data?.map((entry) => entry.val.readings).flat() || [];
+        const readings = data?.map((entry) => {
+            const r = entry.val.readings
+            r.sort((a, b) => -1 * a.n.localeCompare(b.n))
+            return r
+        }).flat() || [];
 
         const allTimestamps = new Set<number>();
         readings.forEach(reading => {
             if (reading?.ts) allTimestamps.add(+new Date(reading.ts));
         });
         const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
-        const formattedTimestamps = sortedTimestamps.map(ts => formatTimestamp(ts));
+        const formattedTimestamps = sortedTimestamps.map(ts => formatTimestamp(ts, timeRange));
         const result: Record<string, Record<MetricKey, (number | null)[]> & { timestamps: string[] }> = {};
 
         readings.forEach(reading => {
@@ -117,9 +121,8 @@ const HistoricalChart: React.FC = () => {
     }, [data, timeRange]);
 
     useEffect(() => {
-        if (selectedDevices.length === 0 && Object.keys(groupedData).length > 0) {
-            setSelectedDevices(Object.keys(groupedData));
-        }
+        // console.log(selectedDevices.length);
+        setSelectedDevices(Object.keys(groupedData));
     }, [groupedData]);
 
     useEffect(() => {
