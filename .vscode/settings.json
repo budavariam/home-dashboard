@@ -10,6 +10,7 @@
     },
     "peacock.color": "#cec46d",
     "conventionalCommits.scopes": [
-        "frontend"
+        "frontend",
+        "device"
     ]
 }
