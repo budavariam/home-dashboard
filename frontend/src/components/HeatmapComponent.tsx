@@ -23,6 +23,9 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     mappings,
     className = ""
 }) => {
+    const [hoveredCell, setHoveredCell] = React.useState<{ x: number; y: number; value: number | null; device: string; timestamp: string } | null>(null);
+    const [mousePosition, setMousePosition] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
     const heatmapData: HeatmapCell[] = React.useMemo(() => {
         const data: HeatmapCell[] = [];
 
@@ -70,6 +73,19 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
         }
     };
 
+    const handleMouseMove = (e: React.MouseEvent) => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleCellHover = (device: string, timestamp: string, value: number | null, e: React.MouseEvent) => {
+        setHoveredCell({ x: e.clientX, y: e.clientY, value, device, timestamp });
+        setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleCellLeave = () => {
+        setHoveredCell(null);
+    };
+
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
     const devices = selectedDevices.filter(device => groupedData[device]);
 
@@ -82,55 +98,39 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     }
 
     return (
-        <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${className}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 relative ${className}`} onMouseMove={handleMouseMove}>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
                 {selectedMetric === 'hum' ? 'Humidity' : selectedMetric === 'tmp' ? 'Temperature' : 'Battery'} Heatmap
             </h3>
 
-            <div className="overflow-x-auto">
-                <div className="inline-block min-w-full">
-                    {/* Header row with timestamps */}
-                    <div className="flex">
-                        <div className="w-32 flex-shrink-0"></div> {/* Empty corner cell */}
-                        {uniqueTimestamps.map((timestamp, index) => (
-                            <div
-                                key={index}
-                                className="w-16 h-8 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-600"
-                                style={{ writingMode: 'sideways-lr', textOrientation: 'mixed' }}
-                            >
-                                {timestamp}
-                            </div>
-                        ))}
-                    </div>
+            <div className="w-full">
+                {/* Data rows */}
+                {devices.map((device) => (
+                    <div key={device} className="flex w-full">
+                        {/* Device name */}
+                        <div className="w-32 flex-shrink-0 h-8 flex items-center px-2 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700">
+                            {mappings[device] || device}
+                        </div>
 
-                    {/* Data rows */}
-                    {devices.map((device) => (
-                        <div key={device} className="flex border-t border-gray-200 dark:border-gray-600">
-                            {/* Device name */}
-                            <div className="w-32 flex-shrink-0 h-8 flex items-center px-2 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700">
-                                {mappings[device] || device}
-                            </div>
-
-                            {/* Data cells */}
+                        {/* Data cells */}
+                        <div className="flex-1 flex">
                             {groupedData[device][selectedMetric].map((value, timestampIndex) => (
                                 <div
                                     key={timestampIndex}
-                                    className="text-shadow-glow w-16 h-8 border-r border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="flex-1 h-8 cursor-pointer hover:opacity-80 transition-opacity"
                                     style={{
                                         backgroundColor: getHeatmapColor(value),
-                                        color: value === null ? '#9CA3AF' : '#000',
                                     }}
-                                    title={`${mappings[device] || device} at ${uniqueTimestamps[timestampIndex]}: ${value ?? 'N/A'}`}
-                                >
-                                    {value !== null ? value.toFixed(1) : '-'}
-                                </div>
+                                    onMouseEnter={(e) => handleCellHover(device, uniqueTimestamps[timestampIndex], value, e)}
+                                    onMouseLeave={handleCellLeave}
+                                />
                             ))}
                         </div>
-                    ))}
-                </div>
+                    </div>
+                ))}
             </div>
 
-            {/* Legend */}
+            {/* Color Legend */}
             <div className="mt-4 flex items-center justify-center gap-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Low</span>
                 <div className="flex h-4 w-32 rounded">
@@ -149,6 +149,24 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                     ({minValue.toFixed(1)} - {maxValue.toFixed(1)})
                 </span>
             </div>
+
+            {/* Hover Tooltip */}
+            {hoveredCell && (
+                <div
+                    className="fixed bg-gray-900 text-white text-sm rounded-lg px-3 py-2 shadow-lg z-50 pointer-events-none"
+                    style={{
+                        left: mousePosition.x + 10,
+                        top: mousePosition.y - 10,
+                        transform: mousePosition.x > window.innerWidth - 200 ? 'translateX(-100%)' : 'none',
+                    }}
+                >
+                    <div className="font-medium">{mappings[hoveredCell.device] || hoveredCell.device}</div>
+                    <div className="text-gray-300">{hoveredCell.timestamp}</div>
+                    <div className="text-gray-300">
+                        Value: {hoveredCell.value !== null ? hoveredCell.value.toFixed(1) : 'N/A'}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

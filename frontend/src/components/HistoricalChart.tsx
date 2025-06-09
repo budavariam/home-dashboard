@@ -201,7 +201,6 @@ const HistoricalChart: React.FC = () => {
                                     selectedDevices={selectedDevices}
                                     selectedMetric={key}
                                     mappings={mappings}
-                                    className="min-h-[400px]"
                                 />
                             })
                     )
