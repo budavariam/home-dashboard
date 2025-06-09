@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, UserConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
@@ -6,4 +6,9 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 export default defineConfig({
   plugins: [react(), basicSsl()],
   base: '/home-dashboard/',
-})
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './jest.setup.ts',
+  }
+} as UserConfig)
