@@ -35,3 +35,28 @@ export interface ApiResponse {
 }
 
 export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w";
+export type MetricKey = "hum" | "tmp" | "bat";
+export type MetricLabel = "Humidity" | "Temperature" | "Battery";
+
+export interface MetricConfig {
+    key: MetricKey;
+    label: MetricLabel;
+    borderDash?: number[];
+}
+
+export interface ChartConfig {
+    showLegend: boolean;
+    showAxisLabels: boolean;
+    splitCharts: boolean;
+}
+
+export interface DeviceData {
+    hum: (number | null)[];
+    tmp: (number | null)[];
+    bat: (number | null)[];
+    timestamps: string[];
+}
+
+export interface GroupedData {
+    [deviceName: string]: DeviceData;
+}
