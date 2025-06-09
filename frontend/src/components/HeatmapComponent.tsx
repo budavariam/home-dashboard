@@ -96,7 +96,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                             <div
                                 key={index}
                                 className="w-16 h-8 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-600"
-                                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                                style={{ writingMode: 'sideways-lr', textOrientation: 'mixed' }}
                             >
                                 {timestamp}
                             </div>

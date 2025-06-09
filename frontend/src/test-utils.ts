@@ -17,7 +17,7 @@ export const createMockGroupedData = (
         groupedData[device] = {
             hum: timestamps.map((_, i) => 45 + Math.random() * 30 + Math.sin(i * 0.5) * 10),
             tmp: timestamps.map((_, i) => 20 + Math.random() * 10 + Math.cos(i * 0.3) * 5),
-            bat: timestamps.map((_, i) => 85 + Math.random() * 15),
+            bat: timestamps.map(() => 85 + Math.random() * 15),
             timestamps,
         };
     });
