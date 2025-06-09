@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -9,41 +8,24 @@ import {
     Title,
     Tooltip,
     Legend,
-    ChartOptions,
 } from "chart.js";
 import { useHistoricalData } from "../hooks/useHistoricalData";
 import { useSensorParams } from "./context/ParamContext";
-import { TimeRange } from "@/types";
+import { TimeRange, MetricKey, GroupedData, ChartConfig } from "../types";
 import { QueryError } from "./QueryError";
+import { ChartControls } from "./ChartControls";
+import { LineChartComponent } from "./LineChartComponent";
+import { HeatmapComponent } from "./HeatmapComponent";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-type MetricKey = "hum" | "tmp" | "bat";
-type MetricLabel = "Humidity" | "Temperature" | "Battery";
-
-interface MetricConfig {
-    key: MetricKey;
-    label: MetricLabel;
-    borderDash?: number[];
-}
-
-const METRICS: MetricConfig[] = [
-    { key: "hum", label: "Humidity" },
-    { key: "tmp", label: "Temperature", borderDash: [5, 5] },
-    { key: "bat", label: "Battery", borderDash: [2, 2] },
-];
-
-const TIME_RANGES = [
-    { value: "1h", label: "Last 1 Hour" },
-    { value: "6h", label: "Last 6 Hours" },
-    { value: "12h", label: "Last 12 Hours" },
-    { value: "24h", label: "Last 24 Hours" },
-    { value: "48h", label: "Last 2 Days" },
-    { value: "1w", label: "Last Week" },
-    { value: "2w", label: "Past 2 Weeks" },
-] as const;
-
 const COLORS = ["#3b82f6", "#f97316", "#10b981", "#eab308", "#8b5cf6"];
+
+const METRICS = [
+    { key: "hum" as MetricKey, label: "Humidity" },
+    { key: "tmp" as MetricKey, label: "Temperature", borderDash: [5, 5] },
+    { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
+];
 
 const formatTimestamp = (ts: number, timeRange: TimeRange) => {
     const date = new Date(ts);
@@ -59,6 +41,8 @@ const formatTimestamp = (ts: number, timeRange: TimeRange) => {
     return timeStr;
 };
 
+type ViewMode = 'line' | 'heatmap';
+
 const HistoricalChart: React.FC = () => {
     const [timeRange, setTimeRange] = useState<TimeRange>("6h");
     const [selectedMetrics, setSelectedMetrics] = useState<Record<MetricKey, boolean>>({
@@ -66,18 +50,21 @@ const HistoricalChart: React.FC = () => {
         tmp: true,
         bat: false,
     });
-    const [chartConfig, setChartConfig] = useState({
+    const [chartConfig, setChartConfig] = useState<ChartConfig>({
         showLegend: true,
         showAxisLabels: true,
         splitCharts: true,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+    const [viewMode, setViewMode] = useState<ViewMode>('line');
+    const [heatmapMetric, setHeatmapMetric] = useState<MetricKey>('hum');
+    
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange);
     const { mappings } = useSensorParams();
 
-    const groupedData = React.useMemo(() => {
+    const groupedData: GroupedData = React.useMemo(() => {
         const readings = data?.map((entry) => {
             const r = entry.val.readings
             r.sort((a, b) => -1 * a.n.localeCompare(b.n))
@@ -90,7 +77,7 @@ const HistoricalChart: React.FC = () => {
         });
         const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
         const formattedTimestamps = sortedTimestamps.map(ts => formatTimestamp(ts, timeRange));
-        const result: Record<string, Record<MetricKey, (number | null)[]> & { timestamps: string[] }> = {};
+        const result: GroupedData = {};
 
         readings.forEach(reading => {
             if (!reading?.n) return;
@@ -103,6 +90,7 @@ const HistoricalChart: React.FC = () => {
                 };
             }
         });
+        
         readings.forEach(reading => {
             if (!reading?.n || !reading?.ts || !reading?.r) return;
 
@@ -121,7 +109,6 @@ const HistoricalChart: React.FC = () => {
     }, [data, timeRange]);
 
     useEffect(() => {
-        // console.log(selectedDevices.length);
         setSelectedDevices(Object.keys(groupedData));
     }, [groupedData]);
 
@@ -146,189 +133,62 @@ const HistoricalChart: React.FC = () => {
         [device]: COLORS[index % COLORS.length],
     }), {});
 
-    const createDatasets = (metricKey: MetricKey) => {
-        const metric = METRICS.find(m => m.key === metricKey)!;
-        return Object.entries(groupedData)
-            .filter(([device]) => selectedDevices.includes(device))
-            .map(([device, data]) => ({
-                label: `${mappings[device] || device} - ${metric.label}`,
-                data: data[metricKey],
-                borderColor: colorMap[device],
-                backgroundColor: `${colorMap[device]}80`,
-                tension: 0.4,
-                borderDash: metric.borderDash,
-                spanGaps: true,
-                pointRadius: 2,
-                pointHoverRadius: 4,
-            }));
-    };
-
-    const chartOptions: ChartOptions<"line"> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: chartConfig.showLegend,
-                position: "bottom",
-                labels: { color: "#9CA3AF" },
-            },
-            title: {
-                display: true,
-                text: "Historical Device Readings",
-                color: "#9CA3AF",
-            },
-        },
-        scales: {
-            x: {
-                ticks: {
-                    display: chartConfig.showAxisLabels,
-                    color: "#9CA3AF",
-                    maxRotation: 45,
-                    minRotation: 45,
-                    autoSkip: true,
-                    maxTicksLimit: 15,
-                },
-                grid: { color: "#4B5563" },
-            },
-            y: {
-                ticks: {
-                    display: chartConfig.showAxisLabels,
-                    color: "#9CA3AF",
-                },
-                grid: { color: "#4B5563" },
-                beginAtZero: true,
-            },
-        },
-    };
-
-    const renderChart = (metricKey?: MetricKey) => {
-        const datasets = metricKey
-            ? createDatasets(metricKey)
-            : METRICS.filter(m => selectedMetrics[m.key]).flatMap(m => createDatasets(m.key));
-
-        const options = metricKey
-            ? {
-                ...chartOptions,
-                plugins: {
-                    ...chartOptions.plugins,
-                    title: {
-                        ...chartOptions.plugins?.title,
-                        text: `${METRICS.find(m => m.key === metricKey)?.label} Chart`,
-                    },
-                },
-            }
-            : chartOptions;
-
-        return (
-            <Line
-                options={options}
-                data={{
-                    labels: Object.values(groupedData)[0]?.timestamps || [],
-                    datasets,
-                }}
-            />
-        );
-    };
-
     return (
-        <div className="p-6 max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded shadow-lg">
-            <div className="flex flex-col gap-4 mb-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <select
-                        className="border rounded p-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                        value={timeRange}
-                        onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                    >
-                        {TIME_RANGES.map(({ value, label }) => (
-                            <option key={value} value={value}>{label}</option>
-                        ))}
-                    </select>
-
-                    <div className="flex gap-2 items-center">
-                        {METRICS.map(({ key, label }) => (
-                            <label key={key} className="text-gray-700 dark:text-gray-300">
-                                <input
-                                    type="checkbox"
-                                    className="mr-2"
-                                    checked={selectedMetrics[key]}
-                                    onChange={(e) => setSelectedMetrics(prev => ({
-                                        ...prev,
-                                        [key]: e.target.checked,
-                                    }))}
-                                />
-                                {label}
-                            </label>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 items-center">
-                        {Object.entries({
-                            showLegend: "Legends",
-                            showAxisLabels: "Axis Labels",
-                            splitCharts: "Split Charts",
-                        }).map(([key, label]) => (
-                            <label key={key} className="text-gray-700 dark:text-gray-300">
-                                <input
-                                    type="checkbox"
-                                    className="mr-2"
-                                    checked={chartConfig[key as keyof typeof chartConfig]}
-                                    onChange={(e) => setChartConfig(prev => ({
-                                        ...prev,
-                                        [key]: e.target.checked,
-                                    }))}
-                                />
-                                {label}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
-                    <div className="flex flex-col gap-2">
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-700 dark:text-gray-300 font-medium">Devices</span>
-                            <span>
-                                <button
-                                    onClick={() => setSelectedDevices(Object.keys(groupedData))}
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline mr-2"
-                                >
-                                    Select All
-                                </button>
-                                <button
-                                    onClick={() => setSelectedDevices([])}
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                                >
-                                    Deselect All
-                                </button>
-                            </span>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            {Object.keys(groupedData).map((device) => (
-                                <label
-                                    key={device}
-                                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedDevices.includes(device)}
-                                        onChange={(e) => {
-                                            setSelectedDevices(prev =>
-                                                e.target.checked
-                                                    ? [...prev, device]
-                                                    : prev.filter(d => d !== device)
-                                            );
-                                        }}
-                                        className="rounded border-gray-300"
-                                    />
-                                    <span style={{ color: colorMap[device] }}>
-                                        {mappings[device] || device}
-                                    </span>
-                                </label>
+        <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded shadow-lg">
+            {/* View Mode Toggle */}
+            <div className="mb-4 flex gap-2 items-center">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">View Mode:</span>
+                <button
+                    onClick={() => setViewMode('line')}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                        viewMode === 'line'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                    }`}
+                >
+                    Line Chart
+                </button>
+                <button
+                    onClick={() => setViewMode('heatmap')}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                        viewMode === 'heatmap'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                    }`}
+                >
+                    Heatmap
+                </button>
+                
+                {/* Heatmap metric selector */}
+                {viewMode === 'heatmap' && (
+                    <>
+                        <span className="text-gray-700 dark:text-gray-300 ml-4">Metric:</span>
+                        <select
+                            className="border rounded p-1 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                            value={heatmapMetric}
+                            onChange={(e) => setHeatmapMetric(e.target.value as MetricKey)}
+                        >
+                            {METRICS.map(({ key, label }) => (
+                                <option key={key} value={key}>{label}</option>
                             ))}
-                        </div>
-                    </div>
-                </div>
+                        </select>
+                    </>
+                )}
             </div>
+
+            <ChartControls
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+                selectedMetrics={selectedMetrics}
+                onMetricsChange={setSelectedMetrics}
+                chartConfig={chartConfig}
+                onChartConfigChange={setChartConfig}
+                devices={Object.keys(groupedData)}
+                selectedDevices={selectedDevices}
+                onDevicesChange={setSelectedDevices}
+                mappings={mappings}
+                colorMap={colorMap}
+            />
 
             {isLoading && (
                 <div className="text-center text-gray-700 dark:text-gray-300 mb-2">
@@ -337,18 +197,42 @@ const HistoricalChart: React.FC = () => {
             )}
 
             <div ref={chartContainerRef} className="w-full">
-                {chartConfig.splitCharts ? (
-                    METRICS
-                        .filter(({ key }) => selectedMetrics[key])
-                        .map(({ key }) => (
-                            <div key={key} className="mb-6 h-[400px]">
-                                {renderChart(key)}
-                            </div>
-                        ))
+                {viewMode === 'line' ? (
+                    chartConfig.splitCharts ? (
+                        METRICS
+                            .filter(({ key }) => selectedMetrics[key])
+                            .map(({ key }) => (
+                                <LineChartComponent
+                                    key={key}
+                                    groupedData={groupedData}
+                                    selectedDevices={selectedDevices}
+                                    selectedMetrics={selectedMetrics}
+                                    chartConfig={chartConfig}
+                                    mappings={mappings}
+                                    colorMap={colorMap}
+                                    metricKey={key}
+                                    className="mb-6 h-[400px]"
+                                />
+                            ))
+                    ) : (
+                        <LineChartComponent
+                            groupedData={groupedData}
+                            selectedDevices={selectedDevices}
+                            selectedMetrics={selectedMetrics}
+                            chartConfig={chartConfig}
+                            mappings={mappings}
+                            colorMap={colorMap}
+                            className="h-[400px]"
+                        />
+                    )
                 ) : (
-                    <div className="h-[400px]">
-                        {renderChart()}
-                    </div>
+                    <HeatmapComponent
+                        groupedData={groupedData}
+                        selectedDevices={selectedDevices}
+                        selectedMetric={heatmapMetric}
+                        mappings={mappings}
+                        className="min-h-[400px]"
+                    />
                 )}
             </div>
         </div>
