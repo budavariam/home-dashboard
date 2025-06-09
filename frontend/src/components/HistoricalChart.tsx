@@ -57,8 +57,7 @@ const HistoricalChart: React.FC = () => {
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
-    const [heatmapMetric, setHeatmapMetric] = useState<MetricKey>('hum');
-    
+
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
     const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange);
@@ -90,7 +89,7 @@ const HistoricalChart: React.FC = () => {
                 };
             }
         });
-        
+
         readings.forEach(reading => {
             if (!reading?.n || !reading?.ts || !reading?.r) return;
 
@@ -140,40 +139,22 @@ const HistoricalChart: React.FC = () => {
                 <span className="text-gray-700 dark:text-gray-300 font-medium">View Mode:</span>
                 <button
                     onClick={() => setViewMode('line')}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${
-                        viewMode === 'line'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${viewMode === 'line'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                        }`}
                 >
                     Line Chart
                 </button>
                 <button
                     onClick={() => setViewMode('heatmap')}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${
-                        viewMode === 'heatmap'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${viewMode === 'heatmap'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                        }`}
                 >
                     Heatmap
                 </button>
-                
-                {/* Heatmap metric selector */}
-                {viewMode === 'heatmap' && (
-                    <>
-                        <span className="text-gray-700 dark:text-gray-300 ml-4">Metric:</span>
-                        <select
-                            className="border rounded p-1 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                            value={heatmapMetric}
-                            onChange={(e) => setHeatmapMetric(e.target.value as MetricKey)}
-                        >
-                            {METRICS.map(({ key, label }) => (
-                                <option key={key} value={key}>{label}</option>
-                            ))}
-                        </select>
-                    </>
-                )}
             </div>
 
             <ChartControls
@@ -197,25 +178,35 @@ const HistoricalChart: React.FC = () => {
             )}
 
             <div ref={chartContainerRef} className="w-full">
-                {viewMode === 'line' ? (
-                    chartConfig.splitCharts ? (
+                {chartConfig.splitCharts
+                    ? (
                         METRICS
                             .filter(({ key }) => selectedMetrics[key])
-                            .map(({ key }) => (
-                                <LineChartComponent
-                                    key={key}
+                            .map(({ key }) => {
+                                if (viewMode === 'line') {
+                                    return <LineChartComponent
+                                        key={key}
+                                        groupedData={groupedData}
+                                        selectedDevices={selectedDevices}
+                                        selectedMetrics={selectedMetrics}
+                                        chartConfig={chartConfig}
+                                        mappings={mappings}
+                                        colorMap={colorMap}
+                                        metricKey={key}
+                                        className="mb-6 h-[400px]"
+                                    />
+                                }
+                                return <HeatmapComponent
                                     groupedData={groupedData}
                                     selectedDevices={selectedDevices}
-                                    selectedMetrics={selectedMetrics}
-                                    chartConfig={chartConfig}
+                                    selectedMetric={key}
                                     mappings={mappings}
-                                    colorMap={colorMap}
-                                    metricKey={key}
-                                    className="mb-6 h-[400px]"
+                                    className="min-h-[400px]"
                                 />
-                            ))
-                    ) : (
-                        <LineChartComponent
+                            })
+                    )
+                    : (viewMode === 'line')
+                        ? <LineChartComponent
                             groupedData={groupedData}
                             selectedDevices={selectedDevices}
                             selectedMetrics={selectedMetrics}
@@ -224,16 +215,7 @@ const HistoricalChart: React.FC = () => {
                             colorMap={colorMap}
                             className="h-[400px]"
                         />
-                    )
-                ) : (
-                    <HeatmapComponent
-                        groupedData={groupedData}
-                        selectedDevices={selectedDevices}
-                        selectedMetric={heatmapMetric}
-                        mappings={mappings}
-                        className="min-h-[400px]"
-                    />
-                )}
+                        : "Heatmap does not support single chart mode..."}
             </div>
         </div>
     );

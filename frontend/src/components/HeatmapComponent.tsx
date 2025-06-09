@@ -115,7 +115,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                             {groupedData[device][selectedMetric].map((value, timestampIndex) => (
                                 <div
                                     key={timestampIndex}
-                                    className="w-16 h-8 border-r border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="text-shadow-glow w-16 h-8 border-r border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
                                     style={{
                                         backgroundColor: getHeatmapColor(value),
                                         color: value === null ? '#9CA3AF' : '#000',
