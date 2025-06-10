@@ -26,6 +26,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
 }) => {
     const [hoveredCell, setHoveredCell] = React.useState<{ x: number; y: number; value: number | null; device: string; timestamp: string } | null>(null);
     const [mousePosition, setMousePosition] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [hoveredLegendSegment, setHoveredLegendSegment] = React.useState<number | null>(null);
 
     const heatmapData: HeatmapCell[] = React.useMemo(() => {
         const data: HeatmapCell[] = [];
@@ -74,6 +75,15 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
         }
     };
 
+    const getLegendTitle = (segmentIndex: number | null): string => {
+        if (segmentIndex === null) return "";
+        
+        const value = minValue + (maxValue - minValue) * (segmentIndex / 19);
+        const unit = selectedMetric === 'hum' ? '%' : selectedMetric === 'tmp' ? '°C' : '%';
+        
+        return `${value.toFixed(1)}${unit}`;
+    };
+
     const handleMouseMove = (e: React.MouseEvent) => {
         setMousePosition({ x: e.clientX, y: e.clientY });
     };
@@ -85,6 +95,14 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
 
     const handleCellLeave = () => {
         setHoveredCell(null);
+    };
+
+    const handleLegendSegmentHover = (segmentIndex: number) => {
+        setHoveredLegendSegment(segmentIndex);
+    };
+
+    const handleLegendSegmentLeave = () => {
+        setHoveredLegendSegment(null);
     };
 
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
@@ -135,7 +153,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                                     className={classNames(
                                         'flex-1 h-8 cursor-pointer hover:opacity-80 transition-opacity relative',
                                         {
-                                            'border-l-2 border-gray-800 border-opacity-50': isNewDay(timestampIndex)
+                                            'border-l-2 border-gray-400 border-opacity-50': isNewDay(timestampIndex)
                                         }
                                     )}
                                     style={{
@@ -153,14 +171,19 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
             {/* Color Legend */}
             <div className="mt-4 flex items-center justify-center gap-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Low</span>
-                <div className="flex h-4 w-32 rounded">
+                <div 
+                    className="flex h-4 w-32 rounded cursor-crosshair"
+                    title={getLegendTitle(hoveredLegendSegment)}
+                >
                     {Array.from({ length: 20 }, (_, i) => (
                         <div
                             key={i}
-                            className="flex-1 h-full"
+                            className="flex-1 h-full hover:opacity-30 transition-opacity"
                             style={{
                                 backgroundColor: getHeatmapColor(minValue + (maxValue - minValue) * (i / 19)),
                             }}
+                            onMouseEnter={() => handleLegendSegmentHover(i)}
+                            onMouseLeave={handleLegendSegmentLeave}
                         />
                     ))}
                 </div>
