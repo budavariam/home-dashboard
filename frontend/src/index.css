@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background-color: hsl(var(--background));
+  color: black;
+  overscroll-behavior: none;
+}
+
+.dark body {
+  background-color: rgb(17 24 39 / var(--tw-bg-opacity, 1));
+  color: white;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -30,6 +41,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem
   }
+  
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -57,18 +69,14 @@
     --chart-5: 340 75% 55%
   }
 }
+
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    @apply bg-gray-900 text-white; /* Dark mode styles */
+    background-color: rgb(17 24 39 / var(--tw-bg-opacity, 1));
+    color: hsl(var(--foreground));
   }
 }
 

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChartControls } from './ChartControls';
 import { useState } from 'react';
+import { mockColorMap, mockDevices, mockMappings } from '../test-utils';
 
 const meta: Meta<typeof ChartControls> = {
     title: 'Chart Components/ChartControls',
@@ -9,20 +10,6 @@ const meta: Meta<typeof ChartControls> = {
         layout: 'padded',
     },
     tags: ['autodocs'],
-};
-
-const mockDevices = ['device001', 'device002', 'device003', 'device004'];
-const mockMappings = {
-    'device001': 'Living Room Sensor',
-    'device002': 'Kitchen Sensor',
-    'device003': 'Bedroom Sensor',
-    'device004': 'Bathroom Sensor',
-};
-const mockColorMap = {
-    'device001': '#3b82f6',
-    'device002': '#f97316',
-    'device003': '#10b981',
-    'device004': '#eab308',
 };
 
 export default meta;

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { HeatmapComponent } from './HeatmapComponent';
 import { DeviceData } from '@/types';
+import { mockMappings } from '../test-utils';
 
 const meta: Meta<typeof HeatmapComponent> = {
     title: 'Chart Components/HeatmapComponent',
@@ -37,11 +38,6 @@ const generateMockData = () => {
 };
 
 const mockGroupedData = generateMockData();
-const mockMappings = {
-    'device001': 'Living Room',
-    'device002': 'Kitchen',
-    'device003': 'Bedroom',
-};
 
 export const HumidityHeatmap: Story = {
     args: {

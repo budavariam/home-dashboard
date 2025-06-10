@@ -1,4 +1,42 @@
-import { GroupedData, MetricKey } from './types';
+import { DeviceData, GroupedData, MetricKey } from './types';
+
+export const mockDevices = ['device001', 'device002', 'device003', 'device004'];
+export const mockMappings = {
+    'device001': 'Living Room Sensor',
+    'device002': 'Kitchen Sensor',
+    'device003': 'Bedroom Sensor',
+    'device004': 'Bathroom Sensor',
+};
+export const mockColorMap = {
+    'device001': '#3b82f6',
+    'device002': '#f97316',
+    'device003': '#10b981',
+    'device004': '#eab308',
+};
+
+
+const generateMockData = () => {
+    const timestamps = Array.from({ length: 12 }, (_, i) => {
+        const hour = 8 + i;
+        return `${hour.toString().padStart(2, '0')}:00`;
+    });
+
+    const devices = ['device001', 'device002', 'device003'];
+    const groupedData: { [k: string]: DeviceData } = {} as { [k: string]: DeviceData };
+
+    devices.forEach(device => {
+        groupedData[device] = {
+            hum: timestamps.map((_, i) => 45 + Math.random() * 30 + Math.sin(i * 0.5) * 10),
+            tmp: timestamps.map((_, i) => 20 + Math.random() * 10 + Math.cos(i * 0.3) * 5),
+            bat: timestamps.map(() => 85 + Math.random() * 15),
+            timestamps,
+        };
+    });
+
+    return groupedData;
+};
+
+export const mockLineChartData = generateMockData();
 
 export const createMockGroupedData = (
     deviceCount: number = 3,
