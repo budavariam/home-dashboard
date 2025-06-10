@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import { MetricKey, GroupedData } from '../types';
 
 interface HeatmapComponentProps {
@@ -89,6 +90,20 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
     const devices = selectedDevices.filter(device => groupedData[device]);
 
+    // Function to check if a new day starts at this timestamp index
+    const isNewDay = (timestampIndex: number): boolean => {
+        if (timestampIndex === 0) return false;
+        
+        const currentTimestamp = uniqueTimestamps[timestampIndex];
+        const previousTimestamp = uniqueTimestamps[timestampIndex - 1];
+        
+        // Extract date part (assuming format like "2024-01-15 10:30" or similar)
+        const currentDate = currentTimestamp.split(' ')[0];
+        const previousDate = previousTimestamp.split(' ')[0];
+        
+        return currentDate !== previousDate;
+    };
+
     if (devices.length === 0 || uniqueTimestamps.length === 0) {
         return (
             <div className={`text-center text-gray-500 p-8 ${className}`}>
@@ -117,7 +132,12 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                             {groupedData[device][selectedMetric].map((value, timestampIndex) => (
                                 <div
                                     key={timestampIndex}
-                                    className="flex-1 h-8 cursor-pointer hover:opacity-80 transition-opacity"
+                                    className={classNames(
+                                        'flex-1 h-8 cursor-pointer hover:opacity-80 transition-opacity relative',
+                                        {
+                                            'border-l-2 border-gray-800 border-opacity-50': isNewDay(timestampIndex)
+                                        }
+                                    )}
                                     style={{
                                         backgroundColor: getHeatmapColor(value),
                                     }}
