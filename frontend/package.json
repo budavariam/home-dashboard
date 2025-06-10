@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build:site": "tsc -b && vite build",
+    "build": "npm run build:site && npm run build:storybook",
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build:storybook": "storybook build --output-dir dist/storybook",
     "test": "vitest"
   },
   "dependencies": {

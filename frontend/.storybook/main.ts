@@ -15,6 +15,14 @@ const config: StorybookConfig = {
   "framework": {
     "name": "@storybook/react-vite",
     "options": {}
+  },
+  viteFinal: async (config) => {
+    // Set the base path for production builds
+    if (process.env.NODE_ENV === 'production') {
+      config.base = '/home-dashboard/storybook/';
+    }
+    return config;
   }
 };
+
 export default config;

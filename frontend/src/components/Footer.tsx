@@ -5,17 +5,30 @@ export const Footer = () => {
                 <p className="text-sm">
                     Developed by <span className="font-medium text-gray-800 dark:text-gray-200">Mátyás Budavári</span>
                 </p>
-                <p className="text-sm">
-                    Source code available on{' '}
-                    <a
-                        href="https://github.com/budavariam/home-dashboard"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                        GitHub
-                    </a>
-                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-1 text-sm">
+                    <p>
+                        Source code available on{' '}
+                        <a
+                            href="https://github.com/budavariam/home-dashboard"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                            GitHub
+                        </a>
+                    </p>
+                    <span className="hidden sm:inline">•</span>
+                    <p>
+                        <a
+                            href="/home-dashboard/storybook/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                            Component Docs
+                        </a>
+                    </p>
+                </div>
                 <p className="text-xs mt-2">
                     &copy; {new Date().getFullYear()} All Rights Reserved.
                 </p>
