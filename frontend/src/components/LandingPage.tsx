@@ -5,6 +5,7 @@ import { useSensorParams } from './context/ParamContext';
 function LandingPage() {
     const { token, apiParams, mappings } = useSensorParams();
     const [showToken, setShowToken] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const [localToken, setLocalToken] = useState(token || '');
     const [localUser, setLocalUser] = useState(apiParams.user || '');
@@ -29,6 +30,16 @@ function LandingPage() {
         url.searchParams.set('bucket', localBucket);
         url.searchParams.set('mappings', localMappings);
         window.location.href = url.toString();
+    };
+
+    const handleCopyUrl = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
     };
 
     return (
@@ -120,12 +131,20 @@ function LandingPage() {
                         />
                     </div>
 
-                    <button
-                        onClick={handleUpdateUrl}
-                        className="mt-4 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
-                    >
-                        Update Data
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleUpdateUrl}
+                            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
+                        >
+                            Update Data
+                        </button>
+                        <button
+                            onClick={handleCopyUrl}
+                            className="flex-1 py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none dark:bg-gray-500 dark:hover:bg-gray-600"
+                        >
+                            {copied ? 'Copied!' : 'Copy URL'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
