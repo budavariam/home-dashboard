@@ -27,18 +27,14 @@ const METRICS = [
     { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
 ];
 
-const formatTimestamp = (ts: number, timeRange: TimeRange) => {
+const formatTimestamp = (ts: number) => {
     const date = new Date(ts);
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const timeStr = `${hours}:${minutes}`;
-
-    if (["48h", "1w", "2w"].includes(timeRange)) {
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${month}.${day} ${timeStr}`;
-    }
-    return timeStr;
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${month}.${day} ${timeStr}`;
 };
 
 type ViewMode = 'line' | 'heatmap';
@@ -75,7 +71,7 @@ const HistoricalChart: React.FC = () => {
             if (reading?.ts) allTimestamps.add(+new Date(reading.ts));
         });
         const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
-        const formattedTimestamps = sortedTimestamps.map(ts => formatTimestamp(ts, timeRange));
+        const formattedTimestamps = sortedTimestamps.map(ts => formatTimestamp(ts));
         const result: GroupedData = {};
 
         readings.forEach(reading => {

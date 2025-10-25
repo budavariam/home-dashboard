@@ -17,6 +17,12 @@ interface HeatmapCell {
     timestampIndex: number;
 }
 
+const isSingleDay = (timestamps: string[]): boolean => {
+    if (timestamps.length === 0) return true;
+    const firstDate = timestamps[0].split(' ')[0];
+    return timestamps.every(ts => ts.split(' ')[0] === firstDate);
+};
+
 export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     groupedData,
     selectedDevices,
@@ -77,10 +83,10 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
 
     const getLegendTitle = (segmentIndex: number | null): string => {
         if (segmentIndex === null) return "";
-        
+
         const value = minValue + (maxValue - minValue) * (segmentIndex / 19);
         const unit = selectedMetric === 'hum' ? '%' : selectedMetric === 'tmp' ? '°C' : '%';
-        
+
         return `${value.toFixed(1)}${unit}`;
     };
 
@@ -106,19 +112,23 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     };
 
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
+    const allOnSameDay = isSingleDay(uniqueTimestamps)
+
     const devices = selectedDevices.filter(device => groupedData[device]);
 
     // Function to check if a new day starts at this timestamp index
     const isNewDay = (timestampIndex: number): boolean => {
+        if (allOnSameDay) return false;
+
         if (timestampIndex === 0) return false;
-        
+
         const currentTimestamp = uniqueTimestamps[timestampIndex];
         const previousTimestamp = uniqueTimestamps[timestampIndex - 1];
-        
+
         // Extract date part (assuming format like "2024-01-15 10:30" or similar)
         const currentDate = currentTimestamp.split(' ')[0];
         const previousDate = previousTimestamp.split(' ')[0];
-        
+
         return currentDate !== previousDate;
     };
 
@@ -171,7 +181,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
             {/* Color Legend */}
             <div className="mt-4 flex items-center justify-center gap-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Low</span>
-                <div 
+                <div
                     className="flex h-4 w-32 rounded cursor-crosshair"
                     title={getLegendTitle(hoveredLegendSegment)}
                 >
