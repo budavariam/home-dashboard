@@ -23,18 +23,23 @@ function LandingPage() {
         );
     }, [token, apiParams, mappings]);
 
-    const handleUpdateUrl = () => {
+    const buildShareUrl = (maskToken = false) => {
         const url = new URL(window.location.href);
-        url.searchParams.set('token', localToken);
-        url.searchParams.set('user', localUser);
-        url.searchParams.set('bucket', localBucket);
-        url.searchParams.set('mappings', localMappings);
-        window.location.href = url.toString();
+        url.search = '';
+        if (localToken) url.searchParams.set('token', maskToken ? '********' : localToken);
+        if (localUser) url.searchParams.set('user', localUser);
+        if (localBucket) url.searchParams.set('bucket', localBucket);
+        if (localMappings) url.searchParams.set('mappings', localMappings);
+        return url.toString();
+    };
+
+    const handleUpdateUrl = () => {
+        window.location.href = buildShareUrl();
     };
 
     const handleCopyUrl = async () => {
         try {
-            await navigator.clipboard.writeText(window.location.href);
+            await navigator.clipboard.writeText(buildShareUrl());
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
@@ -149,12 +154,12 @@ function LandingPage() {
             </div>
 
             <div className="mt-6 text-gray-600 dark:text-gray-400 text-sm">
-                <div className="mb-3">Example URL format:</div>
+                <div className="mb-3">Shareable URL:</div>
                 <code
-                    className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded break-words w-full leading-8"
+                    className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded break-words w-full leading-8 block"
                     style={{ wordBreak: 'break-word' }}
                 >
-                    ?token=YOUR_TOKEN&user=YOUR_USER&bucket=YOUR_BUCKET&mappings=Sensor_0:Room1;Sensor_1:Room2
+                    {buildShareUrl(true)}
                 </code>
             </div>
 
