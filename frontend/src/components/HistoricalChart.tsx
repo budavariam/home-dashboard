@@ -211,9 +211,13 @@ const HistoricalChart: React.FC = () => {
 
             case 'table':
                 return (
-                    <div className="text-center text-gray-500 p-8">
-                        Table view requires split charts mode. Please enable "Split Charts" in settings.
-                    </div>
+                    <TableComponent
+                        groupedData={groupedData}
+                        selectedDevices={selectedDevices}
+                        selectedMetric="hum"
+                        mappings={mappings}
+                        className="mb-6"
+                    />
                 );
 
             default:

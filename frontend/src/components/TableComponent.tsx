@@ -7,6 +7,7 @@ interface TableComponentProps {
     selectedMetric: MetricKey;
     mappings: Record<string, string>;
     className?: string;
+    splitView?: boolean;
 }
 
 export const TableComponent: React.FC<TableComponentProps> = ({
@@ -14,10 +15,13 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     selectedDevices,
     selectedMetric,
     mappings,
-    className = ""
+    className = "",
+    splitView = false
 }) => {
     const devices = selectedDevices.filter(device => groupedData[device]);
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
+
+    const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
@@ -28,9 +32,34 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         }
     };
 
+    const getMetricShortLabel = (metric: MetricKey): string => {
+        switch (metric) {
+            case 'hum': return 'Hum';
+            case 'tmp': return 'Tmp';
+            case 'bat': return 'Bat';
+            default: return metric;
+        }
+    };
+
     const formatValue = (value: number | null): string => {
         if (value === null) return 'N/A';
         return value.toFixed(1);
+    };
+
+    const formatCombinedValue = (device: string, timestampIndex: number): string => {
+        return METRIC_ORDER
+            .map(metric => {
+                const value = groupedData[device][metric][timestampIndex];
+                return formatValue(value);
+            })
+            .join(' / ');
+    };
+
+    const getHeaderLabel = (): string => {
+        if (splitView) {
+            return METRIC_ORDER.map(m => getMetricShortLabel(m)).join(' / ');
+        }
+        return getMetricLabel(selectedMetric);
     };
 
     if (devices.length === 0 || uniqueTimestamps.length === 0) {
@@ -44,9 +73,9 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${className}`}>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                {getMetricLabel(selectedMetric)} Data Table
+                {splitView ? 'All Metrics Data Table' : `${getMetricLabel(selectedMetric)} Data Table`}
             </h3>
-            
+
             <div className="overflow-auto max-h-[600px] border border-gray-300 dark:border-gray-600 rounded">
                 <table className="min-w-full border-collapse">
                     <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
@@ -55,18 +84,23 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 Timestamp
                             </th>
                             {devices.map((device) => (
-                                <th 
+                                <th
                                     key={device}
                                     className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap"
                                 >
-                                    {mappings[device] || device}
+                                    <div>{mappings[device] || device}</div>
+                                    {splitView && (
+                                        <div className="text-xs font-normal text-gray-600 dark:text-gray-400 mt-1">
+                                            {getHeaderLabel()}
+                                        </div>
+                                    )}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {uniqueTimestamps.map((timestamp, timestampIndex) => (
-                            <tr 
+                            <tr
                                 key={timestampIndex}
                                 className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
                             >
@@ -74,13 +108,16 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                     {timestamp}
                                 </td>
                                 {devices.map((device) => {
-                                    const value = groupedData[device][selectedMetric][timestampIndex];
+                                    const displayValue = splitView
+                                        ? formatCombinedValue(device, timestampIndex)
+                                        : formatValue(groupedData[device][selectedMetric][timestampIndex]);
+
                                     return (
-                                        <td 
+                                        <td
                                             key={device}
                                             className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right"
                                         >
-                                            {formatValue(value)}
+                                            {displayValue}
                                         </td>
                                     );
                                 })}
