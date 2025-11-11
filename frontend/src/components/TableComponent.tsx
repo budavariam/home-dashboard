@@ -18,7 +18,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     selectedMetrics,
     mappings,
     className = "",
-    splitView = true
+    splitView = false
 }) => {
     const devices = selectedDevices.filter(device => groupedData[device]);
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
