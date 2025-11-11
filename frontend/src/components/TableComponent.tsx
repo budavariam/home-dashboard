@@ -16,6 +16,7 @@ type SortConfig = {
     direction: 'asc' | 'desc';
 } | null;
 
+const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
 export const TableComponent: React.FC<TableComponentProps> = ({
     groupedData,
     selectedDevices,
@@ -28,9 +29,8 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
     const devices = selectedDevices.filter(device => groupedData[device]);
-    const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
+    const uniqueTimestamps = useMemo(() => Object.values(groupedData)[0]?.timestamps || [], [groupedData]);
 
-    const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
 
     // Filter metrics based on selection
     const activeMetrics = useMemo(() => {
@@ -45,15 +45,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             case 'hum': return 'Humidity (%)';
             case 'tmp': return 'Temperature (°C)';
             case 'bat': return 'Battery (%)';
-            default: return metric;
-        }
-    };
-
-    const getMetricShortLabel = (metric: MetricKey): string => {
-        switch (metric) {
-            case 'hum': return 'Hum';
-            case 'tmp': return 'Tmp';
-            case 'bat': return 'Bat';
             default: return metric;
         }
     };
@@ -100,8 +91,8 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         }
 
         return [...indices].sort((a, b) => {
-            let aValue: any;
-            let bValue: any;
+            let aValue: string | number | null;
+            let bValue: string | number | null;
 
             if (sortConfig.key === 'timestamp') {
                 aValue = uniqueTimestamps[a];
