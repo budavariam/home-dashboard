@@ -5,6 +5,7 @@ interface TableComponentProps {
     groupedData: GroupedData;
     selectedDevices: string[];
     selectedMetric: MetricKey;
+    selectedMetrics?: Record<MetricKey, boolean>; // Add this prop
     mappings: Record<string, string>;
     className?: string;
     splitView?: boolean;
@@ -14,14 +15,23 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     groupedData,
     selectedDevices,
     selectedMetric,
+    selectedMetrics,
     mappings,
     className = "",
-    splitView = false
+    splitView = true
 }) => {
     const devices = selectedDevices.filter(device => groupedData[device]);
     const uniqueTimestamps = Object.values(groupedData)[0]?.timestamps || [];
 
     const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
+
+    // Filter metrics based on selection
+    const activeMetrics = React.useMemo(() => {
+        if (!selectedMetrics || splitView) {
+            return METRIC_ORDER;
+        }
+        return METRIC_ORDER.filter(metric => selectedMetrics[metric]);
+    }, [selectedMetrics, splitView]);
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
@@ -47,7 +57,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     };
 
     const formatCombinedValue = (device: string, timestampIndex: number): string => {
-        return METRIC_ORDER
+        return activeMetrics
             .map(metric => {
                 const value = groupedData[device][metric][timestampIndex];
                 return formatValue(value);
@@ -56,8 +66,8 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     };
 
     const getHeaderLabel = (): string => {
-        if (splitView) {
-            return METRIC_ORDER.map(m => getMetricShortLabel(m)).join(' / ');
+        if (!splitView) {
+            return activeMetrics.map(m => getMetricShortLabel(m)).join(' / ');
         }
         return getMetricLabel(selectedMetric);
     };
@@ -70,10 +80,18 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         );
     }
 
+    if (!splitView && activeMetrics.length === 0) {
+        return (
+            <div className={`text-center text-gray-500 p-8 ${className}`}>
+                No metrics selected
+            </div>
+        );
+    }
+
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${className}`}>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                {splitView ? 'All Metrics Data Table' : `${getMetricLabel(selectedMetric)} Data Table`}
+                {!splitView ? 'All Metrics Data Table' : `${getMetricLabel(selectedMetric)} Data Table`}
             </h3>
 
             <div className="overflow-auto max-h-[600px] border border-gray-300 dark:border-gray-600 rounded">
@@ -89,7 +107,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                     className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap"
                                 >
                                     <div>{mappings[device] || device}</div>
-                                    {splitView && (
+                                    {!splitView && (
                                         <div className="text-xs font-normal text-gray-600 dark:text-gray-400 mt-1">
                                             {getHeaderLabel()}
                                         </div>
@@ -109,8 +127,8 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 </td>
                                 {devices.map((device) => {
                                     const displayValue = splitView
-                                        ? formatCombinedValue(device, timestampIndex)
-                                        : formatValue(groupedData[device][selectedMetric][timestampIndex]);
+                                        ? formatValue(groupedData[device][selectedMetric][timestampIndex])
+                                        : formatCombinedValue(device, timestampIndex);
 
                                     return (
                                         <td

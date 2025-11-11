@@ -215,6 +215,7 @@ const HistoricalChart: React.FC = () => {
                         groupedData={groupedData}
                         selectedDevices={selectedDevices}
                         selectedMetric="hum"
+                        selectedMetrics={selectedMetrics}
                         mappings={mappings}
                         className="mb-6"
                         splitView={true}
