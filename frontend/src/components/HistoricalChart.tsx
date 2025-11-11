@@ -16,6 +16,7 @@ import { QueryError } from "./QueryError";
 import { ChartControls } from "./ChartControls";
 import { LineChartComponent } from "./LineChartComponent";
 import { HeatmapComponent } from "./HeatmapComponent";
+import { TableComponent } from "./TableComponent";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -37,7 +38,18 @@ const formatTimestamp = (ts: number) => {
     return `${month}.${day} ${timeStr}`;
 };
 
-type ViewMode = 'line' | 'heatmap';
+type ViewMode = 'line' | 'heatmap' | 'table';
+
+interface RenderViewProps {
+    viewMode: ViewMode;
+    splitCharts: boolean;
+    groupedData: GroupedData;
+    selectedDevices: string[];
+    selectedMetrics: Record<MetricKey, boolean>;
+    chartConfig: ChartConfig;
+    mappings: Record<string, string>;
+    colorMap: Record<string, string>;
+}
 
 const HistoricalChart: React.FC = () => {
     const [timeRange, setTimeRange] = useState<TimeRange>("6h");
@@ -61,9 +73,9 @@ const HistoricalChart: React.FC = () => {
 
     const groupedData: GroupedData = React.useMemo(() => {
         const readings = data?.map((entry) => {
-            const r = entry.val.readings
-            r.sort((a, b) => -1 * a.n.localeCompare(b.n))
-            return r
+            const r = entry.val.readings;
+            r.sort((a, b) => -1 * a.n.localeCompare(b.n));
+            return r;
         }).flat() || [];
 
         const allTimestamps = new Set<number>();
@@ -121,6 +133,113 @@ const HistoricalChart: React.FC = () => {
         return () => resizeObserver.disconnect();
     }, []);
 
+    const renderSplitView = (props: RenderViewProps): React.ReactNode => {
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, chartConfig, mappings, colorMap } = props;
+
+        const activeMetrics = METRICS.filter(({ key }) => selectedMetrics[key]);
+
+        return activeMetrics.map(({ key }) => {
+            switch (viewMode) {
+                case 'line':
+                    return (
+                        <LineChartComponent
+                            key={key}
+                            groupedData={groupedData}
+                            selectedDevices={selectedDevices}
+                            selectedMetrics={selectedMetrics}
+                            chartConfig={chartConfig}
+                            mappings={mappings}
+                            colorMap={colorMap}
+                            metricKey={key}
+                            className="mb-6 h-[400px]"
+                        />
+                    );
+
+                case 'heatmap':
+                    return (
+                        <HeatmapComponent
+                            key={key}
+                            groupedData={groupedData}
+                            selectedDevices={selectedDevices}
+                            selectedMetric={key}
+                            mappings={mappings}
+                            className="mb-6"
+                        />
+                    );
+
+                case 'table':
+                    return (
+                        <TableComponent
+                            key={key}
+                            groupedData={groupedData}
+                            selectedDevices={selectedDevices}
+                            selectedMetric={key}
+                            mappings={mappings}
+                            className="mb-6"
+                        />
+                    );
+
+                default:
+                    return null;
+            }
+        });
+    };
+
+    const renderCombinedView = (props: RenderViewProps): React.ReactNode => {
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, chartConfig, mappings, colorMap } = props;
+
+        switch (viewMode) {
+            case 'line':
+                return (
+                    <LineChartComponent
+                        groupedData={groupedData}
+                        selectedDevices={selectedDevices}
+                        selectedMetrics={selectedMetrics}
+                        chartConfig={chartConfig}
+                        mappings={mappings}
+                        colorMap={colorMap}
+                        className="h-[400px]"
+                    />
+                );
+
+            case 'heatmap':
+                return (
+                    <div className="text-center text-gray-500 p-8">
+                        Heatmap does not support combined chart mode. Please enable "Split Charts" in settings.
+                    </div>
+                );
+
+            case 'table':
+                return (
+                    <div className="text-center text-gray-500 p-8">
+                        Table view requires split charts mode. Please enable "Split Charts" in settings.
+                    </div>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    const renderView = (): React.ReactNode => {
+        const renderProps: RenderViewProps = {
+            viewMode,
+            splitCharts: chartConfig.splitCharts,
+            groupedData,
+            selectedDevices,
+            selectedMetrics,
+            chartConfig,
+            mappings,
+            colorMap,
+        };
+
+        if (chartConfig.splitCharts) {
+            return renderSplitView(renderProps);
+        }
+
+        return renderCombinedView(renderProps);
+    };
+
     if (isError) return <QueryError error={error} refetch={refetch} />;
 
     const colorMap: Record<string, string> = Object.keys(groupedData).reduce((acc, device, index) => ({
@@ -131,7 +250,7 @@ const HistoricalChart: React.FC = () => {
     return (
         <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded shadow-lg">
             {/* View Mode Toggle */}
-            <div className="mb-4 flex gap-2 items-center">
+            <div className="mb-4 flex gap-2 items-center flex-wrap">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">View Mode:</span>
                 <button
                     onClick={() => setViewMode('line')}
@@ -150,6 +269,15 @@ const HistoricalChart: React.FC = () => {
                         }`}
                 >
                     Heatmap
+                </button>
+                <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${viewMode === 'table'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                        }`}
+                >
+                    Table
                 </button>
             </div>
 
@@ -174,43 +302,7 @@ const HistoricalChart: React.FC = () => {
             )}
 
             <div ref={chartContainerRef} className="w-full">
-                {chartConfig.splitCharts
-                    ? (
-                        METRICS
-                            .filter(({ key }) => selectedMetrics[key])
-                            .map(({ key }) => {
-                                if (viewMode === 'line') {
-                                    return <LineChartComponent
-                                        key={key}
-                                        groupedData={groupedData}
-                                        selectedDevices={selectedDevices}
-                                        selectedMetrics={selectedMetrics}
-                                        chartConfig={chartConfig}
-                                        mappings={mappings}
-                                        colorMap={colorMap}
-                                        metricKey={key}
-                                        className="mb-6 h-[400px]"
-                                    />
-                                }
-                                return <HeatmapComponent
-                                    groupedData={groupedData}
-                                    selectedDevices={selectedDevices}
-                                    selectedMetric={key}
-                                    mappings={mappings}
-                                />
-                            })
-                    )
-                    : (viewMode === 'line')
-                        ? <LineChartComponent
-                            groupedData={groupedData}
-                            selectedDevices={selectedDevices}
-                            selectedMetrics={selectedMetrics}
-                            chartConfig={chartConfig}
-                            mappings={mappings}
-                            colorMap={colorMap}
-                            className="h-[400px]"
-                        />
-                        : "Heatmap does not support single chart mode..."}
+                {renderView()}
             </div>
         </div>
     );
