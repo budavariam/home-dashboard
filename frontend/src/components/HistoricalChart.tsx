@@ -219,6 +219,7 @@ const HistoricalChart: React.FC = () => {
                         selectedMetrics={selectedMetrics}
                         mappings={mappings}
                         className="mb-6"
+                        splitView={false}
                     />
                 );
 
