@@ -113,11 +113,30 @@ const HistoricalChart: React.FC = () => {
         });
 
         return result;
-    }, [data, timeRange]);
+    }, [data]);
 
     useEffect(() => {
-        setSelectedDevices(Object.keys(groupedData));
+        const availableDevices = Object.keys(groupedData);
+        console.log({ availableDevices });
+        if (availableDevices.length === 0) {
+            return;
+        }
+
+        setSelectedDevices(prev => {
+            // On initial load or when no devices are selected, select all
+            if (prev.length === 0) {
+                return availableDevices;
+            }
+
+            // Keep only the devices that still exist in the new data
+            const stillAvailable = prev.filter(device => availableDevices.includes(device));
+
+            // If all previously selected devices are gone, select all new ones
+            console.log({ groupedData, availableDevices, stillAvailable });
+            return stillAvailable.length > 0 ? stillAvailable : availableDevices;
+        });
     }, [groupedData]);
+
 
     useEffect(() => {
         const container = chartContainerRef.current;
