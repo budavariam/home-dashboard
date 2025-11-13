@@ -159,7 +159,7 @@ function LandingPage() {
                     className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded break-words w-full leading-8 block"
                     style={{ wordBreak: 'break-word' }}
                 >
-                    {buildShareUrl(true)}
+                    {buildShareUrl(!showToken)}
                 </code>
             </div>
 
