@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MetricKey, GroupedData } from '../types';
 
+
 interface TableComponentProps {
     groupedData: GroupedData;
     selectedDevices: string[];
@@ -11,12 +12,15 @@ interface TableComponentProps {
     splitView?: boolean;
 }
 
+
 type SortConfig = {
-    key: 'timestamp' | string; // 'timestamp' or device name
+    key: 'timestamp' | string;
     direction: 'asc' | 'desc';
 } | null;
 
+
 const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
+
 export const TableComponent: React.FC<TableComponentProps> = ({
     groupedData,
     selectedDevices,
@@ -31,14 +35,65 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     const devices = selectedDevices.filter(device => groupedData[device]);
     const uniqueTimestamps = useMemo(() => Object.values(groupedData)[0]?.timestamps || [], [groupedData]);
 
-
-    // Filter metrics based on selection
     const activeMetrics = useMemo(() => {
         if (!selectedMetrics || splitView) {
             return METRIC_ORDER;
         }
         return METRIC_ORDER.filter(metric => selectedMetrics[metric]);
     }, [selectedMetrics, splitView]);
+
+    // Calculate statistics for each device and metric
+    const calculateStats = useMemo(() => {
+        const stats: Record<string, Record<MetricKey, { avg: number; median: number; min: number; max: number }>> = {};
+
+        devices.forEach(device => {
+            stats[device] = {} as Record<MetricKey, { avg: number; median: number; min: number; max: number }>;
+
+            if (splitView) {
+                // For split view, calculate stats for the selected metric only
+                const values = groupedData[device][selectedMetric].filter((v): v is number => v !== null);
+
+                if (values.length === 0) {
+                    stats[device][selectedMetric] = { avg: 0, median: 0, min: 0, max: 0 };
+                } else {
+                    const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+
+                    const sorted = [...values].sort((a, b) => a - b);
+                    const mid = Math.floor(sorted.length / 2);
+                    const median = sorted.length % 2 === 0
+                        ? (sorted[mid - 1] + sorted[mid]) / 2
+                        : sorted[mid];
+
+                    stats[device][selectedMetric] = { avg, median, min, max };
+                }
+            } else {
+                // For combined view, calculate stats for each active metric separately
+                activeMetrics.forEach(metric => {
+                    const values = groupedData[device][metric].filter((v): v is number => v !== null);
+
+                    if (values.length === 0) {
+                        stats[device][metric] = { avg: 0, median: 0, min: 0, max: 0 };
+                    } else {
+                        const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+                        const min = Math.min(...values);
+                        const max = Math.max(...values);
+
+                        const sorted = [...values].sort((a, b) => a - b);
+                        const mid = Math.floor(sorted.length / 2);
+                        const median = sorted.length % 2 === 0
+                            ? (sorted[mid - 1] + sorted[mid]) / 2
+                            : sorted[mid];
+
+                        stats[device][metric] = { avg, median, min, max };
+                    }
+                });
+            }
+        });
+
+        return stats;
+    }, [devices, groupedData, selectedMetric, splitView, activeMetrics]);
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
@@ -63,6 +118,15 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             .join(' / ');
     };
 
+    const formatCombinedStats = (device: string, statType: 'avg' | 'median' | 'min' | 'max'): string => {
+        return activeMetrics
+            .map(metric => {
+                const value = calculateStats[device][metric][statType];
+                return formatValue(value);
+            })
+            .join(' / ');
+    };
+
     const getTitle = (): string => {
         if (splitView) {
             return `${getMetricLabel(selectedMetric)} Data Table`;
@@ -71,7 +135,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         return metricLabels ? `${metricLabels} Data Table` : 'Data Table';
     };
 
-    // Sorting function
     const handleSort = (key: 'timestamp' | string) => {
         let direction: 'asc' | 'desc' = 'asc';
 
@@ -82,7 +145,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         setSortConfig({ key, direction });
     };
 
-    // Get sorted data indices
     const sortedIndices = useMemo(() => {
         const indices = uniqueTimestamps.map((_, index) => index);
 
@@ -98,20 +160,17 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                 aValue = uniqueTimestamps[a];
                 bValue = uniqueTimestamps[b];
             } else {
-                // Sorting by device column
                 const device = sortConfig.key;
                 if (splitView) {
                     aValue = groupedData[device][selectedMetric][a];
                     bValue = groupedData[device][selectedMetric][b];
                 } else {
-                    // For combined view, sort by first selected metric
                     const firstMetric = activeMetrics[0];
                     aValue = groupedData[device][firstMetric][a];
                     bValue = groupedData[device][firstMetric][b];
                 }
             }
 
-            // Handle null values
             if (aValue === null && bValue === null) return 0;
             if (aValue === null) return 1;
             if (bValue === null) return -1;
@@ -126,7 +185,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         });
     }, [uniqueTimestamps, sortConfig, groupedData, selectedMetric, splitView, activeMetrics]);
 
-    // Sort indicator component
     const SortIndicator: React.FC<{ columnKey: string }> = ({ columnKey }) => {
         if (!sortConfig || sortConfig.key !== columnKey) {
             return <span className="text-gray-400 ml-1">⇅</span>;
@@ -189,7 +247,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 key={timestampIndex}
                                 className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
                             >
-                                <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap bg-gray-50 dark:bg-gray-800">
+                                <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
                                     {uniqueTimestamps[timestampIndex]}
                                 </td>
                                 {devices.map((device) => {
@@ -209,6 +267,29 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                             </tr>
                         ))}
                     </tbody>
+                    <tfoot className="bg-gray-100 dark:bg-gray-700 sticky bottom-0">
+                        {['min', 'avg', 'median', 'max'].map((statType) => (
+                            <tr key={statType} className="border-t-2 border-gray-300 dark:border-gray-600">
+                                <td className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                                    {statType.charAt(0).toUpperCase() + statType.slice(1)}
+                                </td>
+                                {devices.map((device) => {
+                                    const displayValue = splitView
+                                        ? formatValue(calculateStats[device][selectedMetric][statType as keyof typeof calculateStats[string][MetricKey]])
+                                        : formatCombinedStats(device, statType as 'avg' | 'median' | 'min' | 'max');
+
+                                    return (
+                                        <td
+                                            key={device}
+                                            className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 text-right"
+                                        >
+                                            {displayValue}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tfoot>
                 </table>
             </div>
         </div>

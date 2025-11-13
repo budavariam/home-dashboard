@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Line } from "react-chartjs-2";
 import { ChartOptions } from "chart.js";
-import { MetricKey, GroupedData, ChartConfig } from '../types';
+import { MetricKey, GroupedData } from '../types';
+
 
 const METRICS = [
     { key: "hum" as MetricKey, label: "Humidity" },
@@ -9,27 +10,41 @@ const METRICS = [
     { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
 ];
 
+
+interface LineChartConfig {
+    showLegend: boolean;
+    showAxisLabels: boolean;
+    autoScaleY: boolean;
+}
+
+
 interface LineChartComponentProps {
     groupedData: GroupedData;
     selectedDevices: string[];
     selectedMetrics: Record<MetricKey, boolean>;
-    chartConfig: ChartConfig;
     mappings: Record<string, string>;
     colorMap: Record<string, string>;
     metricKey?: MetricKey;
     className?: string;
 }
 
+
 export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     groupedData,
     selectedDevices,
     selectedMetrics,
-    chartConfig,
     mappings,
     colorMap,
     metricKey,
     className = ""
 }) => {
+    const [lineChartConfig, setLineChartConfig] = React.useState<LineChartConfig>({
+        showLegend: true,
+        showAxisLabels: true,
+        autoScaleY: false,
+    });
+
+
     const createDatasets = (targetMetricKey: MetricKey) => {
         const metric = METRICS.find(m => m.key === targetMetricKey)!;
         return Object.entries(groupedData)
@@ -47,12 +62,48 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             }));
     };
 
+
+    const datasets = metricKey
+        ? createDatasets(metricKey)
+        : METRICS.filter(m => selectedMetrics[m.key]).flatMap(m => createDatasets(m.key));
+
+
+    // Calculate Y-axis range if auto-scale is enabled
+    const yAxisConfig = useMemo(() => {
+        if (!lineChartConfig.autoScaleY) {
+            return { beginAtZero: true };
+        }
+
+
+        // Collect all data points
+        const allValues = datasets.flatMap(ds =>
+            ds.data.filter((v): v is number => v !== null && typeof v === 'number')
+        );
+
+
+        if (allValues.length === 0) {
+            return { beginAtZero: true };
+        }
+
+
+        const minVal = Math.min(...allValues);
+        const maxVal = Math.max(...allValues);
+        const padding = (maxVal - minVal) * 0.1; // 10% padding
+
+
+        return {
+            min: Math.floor(minVal - padding),
+            max: Math.ceil(maxVal + padding),
+        };
+    }, [datasets, lineChartConfig.autoScaleY]);
+
+
     const chartOptions: ChartOptions<"line"> = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                display: chartConfig.showLegend,
+                display: lineChartConfig.showLegend,
                 position: "bottom",
                 labels: { color: "#9CA3AF" },
             },
@@ -67,7 +118,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
         scales: {
             x: {
                 ticks: {
-                    display: chartConfig.showAxisLabels,
+                    display: lineChartConfig.showAxisLabels,
                     color: "#9CA3AF",
                     maxRotation: 45,
                     minRotation: 45,
@@ -78,21 +129,18 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             },
             y: {
                 ticks: {
-                    display: chartConfig.showAxisLabels,
+                    display: lineChartConfig.showAxisLabels,
                     color: "#9CA3AF",
                 },
                 grid: { color: "#4B5563" },
-                beginAtZero: true,
+                ...yAxisConfig,
             },
         },
     };
 
-    const datasets = metricKey
-        ? createDatasets(metricKey)
-        : METRICS.filter(m => selectedMetrics[m.key]).flatMap(m => createDatasets(m.key));
 
     return (
-        <div className={className}>
+        <div className={`${className} mb-6`}>
             <Line
                 options={chartOptions}
                 data={{
@@ -100,6 +148,46 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     datasets,
                 }}
             />
+
+            {/* Line Chart Controls - Aligned Right */}
+            <div className="flex gap-2 justify-end mt-2 flex-wrap">
+                <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        className="mr-1"
+                        checked={lineChartConfig.showLegend}
+                        onChange={(e) => setLineChartConfig(prev => ({
+                            ...prev,
+                            showLegend: e.target.checked
+                        }))}
+                    />
+                    Legend
+                </label>
+                <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        className="mr-1"
+                        checked={lineChartConfig.showAxisLabels}
+                        onChange={(e) => setLineChartConfig(prev => ({
+                            ...prev,
+                            showAxisLabels: e.target.checked
+                        }))}
+                    />
+                    Axis
+                </label>
+                <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        className="mr-1"
+                        checked={lineChartConfig.autoScaleY}
+                        onChange={(e) => setLineChartConfig(prev => ({
+                            ...prev,
+                            autoScaleY: e.target.checked
+                        }))}
+                    />
+                    Auto-scale
+                </label>
+            </div>
         </div>
     );
 };
