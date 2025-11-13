@@ -117,7 +117,6 @@ const HistoricalChart: React.FC = () => {
 
     useEffect(() => {
         const availableDevices = Object.keys(groupedData);
-        console.log({ availableDevices });
         if (availableDevices.length === 0) {
             return;
         }
@@ -132,7 +131,6 @@ const HistoricalChart: React.FC = () => {
             const stillAvailable = prev.filter(device => availableDevices.includes(device));
 
             // If all previously selected devices are gone, select all new ones
-            console.log({ groupedData, availableDevices, stillAvailable });
             return stillAvailable.length > 0 ? stillAvailable : availableDevices;
         });
     }, [groupedData]);
@@ -153,7 +151,7 @@ const HistoricalChart: React.FC = () => {
     }, []);
 
     const renderSplitView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, chartConfig, mappings, colorMap } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap } = props;
 
         const activeMetrics = METRICS.filter(({ key }) => selectedMetrics[key]);
 
@@ -166,7 +164,6 @@ const HistoricalChart: React.FC = () => {
                             groupedData={groupedData}
                             selectedDevices={selectedDevices}
                             selectedMetrics={selectedMetrics}
-                            chartConfig={chartConfig}
                             mappings={mappings}
                             colorMap={colorMap}
                             metricKey={key}
@@ -206,7 +203,7 @@ const HistoricalChart: React.FC = () => {
     };
 
     const renderCombinedView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, chartConfig, mappings, colorMap } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap } = props;
 
         switch (viewMode) {
             case 'line':
@@ -215,7 +212,6 @@ const HistoricalChart: React.FC = () => {
                         groupedData={groupedData}
                         selectedDevices={selectedDevices}
                         selectedMetrics={selectedMetrics}
-                        chartConfig={chartConfig}
                         mappings={mappings}
                         colorMap={colorMap}
                         className="h-[400px]"
