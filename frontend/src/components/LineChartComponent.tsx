@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Line } from "react-chartjs-2";
 import { ChartOptions } from "chart.js";
 import { MetricKey, GroupedData } from '../types';
@@ -11,7 +11,7 @@ const METRICS = [
 ];
 
 
-interface LineChartConfig {
+export interface LineChartConfig {
     showLegend: boolean;
     showAxisLabels: boolean;
     autoScaleY: boolean;
@@ -26,7 +26,16 @@ interface LineChartComponentProps {
     colorMap: Record<string, string>;
     metricKey?: MetricKey;
     className?: string;
+    lineChartConfig?: LineChartConfig;
+    onLineChartConfigChange?: (config: LineChartConfig) => void;
 }
+
+
+const defaultLineChartConfig: LineChartConfig = {
+    showLegend: true,
+    showAxisLabels: true,
+    autoScaleY: false,
+};
 
 
 export const LineChartComponent: React.FC<LineChartComponentProps> = ({
@@ -36,14 +45,32 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     mappings,
     colorMap,
     metricKey,
-    className = ""
+    className = "",
+    lineChartConfig: externalConfig,
+    onLineChartConfigChange,
 }) => {
-    const [lineChartConfig, setLineChartConfig] = React.useState<LineChartConfig>({
-        showLegend: true,
-        showAxisLabels: true,
-        autoScaleY: false,
-    });
+    // Internal state for uncontrolled mode
+    const [internalConfig, setInternalConfig] = useState<LineChartConfig>(defaultLineChartConfig);
 
+    // Use external config if provided, otherwise use internal
+    const isControlled = externalConfig !== undefined;
+    const config = isControlled ? externalConfig : internalConfig;
+
+    // Sync internal state with external config when it changes
+    useEffect(() => {
+        if (externalConfig) {
+            setInternalConfig(externalConfig);
+        }
+    }, [externalConfig]);
+
+    const handleConfigChange = (newConfig: LineChartConfig) => {
+        if (onLineChartConfigChange) {
+            onLineChartConfigChange(newConfig);
+        }
+        if (!isControlled) {
+            setInternalConfig(newConfig);
+        }
+    };
 
     const createDatasets = (targetMetricKey: MetricKey) => {
         const metric = METRICS.find(m => m.key === targetMetricKey)!;
@@ -62,48 +89,41 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             }));
     };
 
-
     const datasets = metricKey
         ? createDatasets(metricKey)
         : METRICS.filter(m => selectedMetrics[m.key]).flatMap(m => createDatasets(m.key));
 
-
     // Calculate Y-axis range if auto-scale is enabled
     const yAxisConfig = useMemo(() => {
-        if (!lineChartConfig.autoScaleY) {
+        if (!config.autoScaleY) {
             return { beginAtZero: true };
         }
-
 
         // Collect all data points
         const allValues = datasets.flatMap(ds =>
             ds.data.filter((v): v is number => v !== null && typeof v === 'number')
         );
 
-
         if (allValues.length === 0) {
             return { beginAtZero: true };
         }
-
 
         const minVal = Math.min(...allValues);
         const maxVal = Math.max(...allValues);
         const padding = (maxVal - minVal) * 0.1; // 10% padding
 
-
         return {
             min: Math.floor(minVal - padding),
             max: Math.ceil(maxVal + padding),
         };
-    }, [datasets, lineChartConfig.autoScaleY]);
-
+    }, [datasets, config.autoScaleY]);
 
     const chartOptions: ChartOptions<"line"> = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                display: lineChartConfig.showLegend,
+                display: config.showLegend,
                 position: "bottom",
                 labels: { color: "#9CA3AF" },
             },
@@ -118,7 +138,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
         scales: {
             x: {
                 ticks: {
-                    display: lineChartConfig.showAxisLabels,
+                    display: config.showAxisLabels,
                     color: "#9CA3AF",
                     maxRotation: 45,
                     minRotation: 45,
@@ -129,7 +149,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             },
             y: {
                 ticks: {
-                    display: lineChartConfig.showAxisLabels,
+                    display: config.showAxisLabels,
                     color: "#9CA3AF",
                 },
                 grid: { color: "#4B5563" },
@@ -137,7 +157,6 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             },
         },
     };
-
 
     return (
         <div className={`${className} mb-6`}>
@@ -155,11 +174,11 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     <input
                         type="checkbox"
                         className="mr-1"
-                        checked={lineChartConfig.showLegend}
-                        onChange={(e) => setLineChartConfig(prev => ({
-                            ...prev,
+                        checked={config.showLegend}
+                        onChange={(e) => handleConfigChange({
+                            ...config,
                             showLegend: e.target.checked
-                        }))}
+                        })}
                     />
                     Legend
                 </label>
@@ -167,11 +186,11 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     <input
                         type="checkbox"
                         className="mr-1"
-                        checked={lineChartConfig.showAxisLabels}
-                        onChange={(e) => setLineChartConfig(prev => ({
-                            ...prev,
+                        checked={config.showAxisLabels}
+                        onChange={(e) => handleConfigChange({
+                            ...config,
                             showAxisLabels: e.target.checked
-                        }))}
+                        })}
                     />
                     Axis
                 </label>
@@ -179,11 +198,11 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     <input
                         type="checkbox"
                         className="mr-1"
-                        checked={lineChartConfig.autoScaleY}
-                        onChange={(e) => setLineChartConfig(prev => ({
-                            ...prev,
+                        checked={config.autoScaleY}
+                        onChange={(e) => handleConfigChange({
+                            ...config,
                             autoScaleY: e.target.checked
-                        }))}
+                        })}
                     />
                     Auto-scale
                 </label>

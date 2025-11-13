@@ -12,8 +12,9 @@ import {
 } from 'chart.js';
 import { mockColorMap, mockLineChartData, mockMappings } from '../test-utils';
 
-// Register Chart.js components
+
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
 
 const meta: Meta<typeof LineChartComponent> = {
     title: 'Chart Components/LineChartComponent',
@@ -24,8 +25,10 @@ const meta: Meta<typeof LineChartComponent> = {
     tags: ['autodocs'],
 };
 
+
 export default meta;
 type Story = StoryObj<typeof meta>;
+
 
 export const MultiMetricChart: Story = {
     args: {
@@ -36,16 +39,17 @@ export const MultiMetricChart: Story = {
             tmp: true,
             bat: false,
         },
-        chartConfig: {
+        lineChartConfig: {
             showLegend: true,
             showAxisLabels: true,
-            splitCharts: false,
+            autoScaleY: false,
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
         className: 'h-96 p-4',
     },
 };
+
 
 export const SingleMetricChart: Story = {
     args: {
@@ -56,10 +60,10 @@ export const SingleMetricChart: Story = {
             tmp: false,
             bat: false,
         },
-        chartConfig: {
+        lineChartConfig: {
             showLegend: true,
             showAxisLabels: true,
-            splitCharts: false,
+            autoScaleY: false,
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
@@ -67,6 +71,7 @@ export const SingleMetricChart: Story = {
         className: 'h-96 p-4',
     },
 };
+
 
 export const NoLegendOrLabels: Story = {
     args: {
@@ -77,10 +82,10 @@ export const NoLegendOrLabels: Story = {
             tmp: true,
             bat: false,
         },
-        chartConfig: {
+        lineChartConfig: {
             showLegend: false,
             showAxisLabels: false,
-            splitCharts: false,
+            autoScaleY: false,
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
@@ -88,7 +93,9 @@ export const NoLegendOrLabels: Story = {
     },
 };
 
-export const SingleDevice: Story = {
+
+// Example of uncontrolled mode (no lineChartConfig prop)
+export const UncontrolledMode: Story = {
     args: {
         groupedData: mockLineChartData,
         selectedDevices: ['device001'],
@@ -96,11 +103,6 @@ export const SingleDevice: Story = {
             hum: true,
             tmp: true,
             bat: true,
-        },
-        chartConfig: {
-            showLegend: true,
-            showAxisLabels: true,
-            splitCharts: false,
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
