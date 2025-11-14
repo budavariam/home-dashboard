@@ -109,6 +109,10 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         return value.toFixed(1);
     };
 
+    const formatStatValue = (value: number): string => {
+        return value.toFixed(2);
+    };
+
     const formatCombinedValue = (device: string, timestampIndex: number): string => {
         return activeMetrics
             .map(metric => {
@@ -122,7 +126,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         return activeMetrics
             .map(metric => {
                 const value = calculateStats[device][metric][statType];
-                return formatValue(value);
+                return formatStatValue(value);
             })
             .join(' / ');
     };
@@ -259,6 +263,11 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                         <td
                                             key={device}
                                             className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right"
+                                            style={{
+                                                fontFamily: 'monospace',
+                                                fontVariantNumeric: 'tabular-nums',
+                                                fontFeatureSettings: '"tnum"'
+                                            }}
                                         >
                                             {displayValue}
                                         </td>
@@ -275,13 +284,18 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 </td>
                                 {devices.map((device) => {
                                     const displayValue = splitView
-                                        ? formatValue(calculateStats[device][selectedMetric][statType as keyof typeof calculateStats[string][MetricKey]])
+                                        ? formatStatValue(calculateStats[device][selectedMetric][statType as keyof typeof calculateStats[string][MetricKey]])
                                         : formatCombinedStats(device, statType as 'avg' | 'median' | 'min' | 'max');
 
                                     return (
                                         <td
                                             key={device}
                                             className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 text-right"
+                                            style={{
+                                                fontFamily: 'monospace',
+                                                fontVariantNumeric: 'tabular-nums',
+                                                fontFeatureSettings: '"tnum"'
+                                            }}
                                         >
                                             {displayValue}
                                         </td>
