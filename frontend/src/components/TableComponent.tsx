@@ -30,7 +30,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     className = "",
     splitView = true
 }) => {
-    const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+    const [sortConfig, setSortConfig] = useState<SortConfig>({key: 'timestamp', direction: 'desc'});
 
     const devices = selectedDevices.filter(device => groupedData[device]);
     const uniqueTimestamps = useMemo(() => Object.values(groupedData)[0]?.timestamps || [], [groupedData]);
