@@ -43,6 +43,12 @@ export const MultiMetricChart: Story = {
             showLegend: true,
             showAxisLabels: true,
             autoScaleY: false,
+            extrapolation: {
+                enabled: false,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
@@ -64,6 +70,12 @@ export const SingleMetricChart: Story = {
             showLegend: true,
             showAxisLabels: true,
             autoScaleY: false,
+            extrapolation: {
+                enabled: false,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
@@ -86,6 +98,12 @@ export const NoLegendOrLabels: Story = {
             showLegend: false,
             showAxisLabels: false,
             autoScaleY: false,
+            extrapolation: {
+                enabled: false,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
@@ -106,6 +124,90 @@ export const UncontrolledMode: Story = {
         },
         mappings: mockMappings,
         colorMap: mockColorMap,
+        className: 'h-96 p-4',
+    },
+};
+
+
+// Extrapolation Stories
+export const WithLinearForecast: Story = {
+    args: {
+        groupedData: mockLineChartData,
+        selectedDevices: ['device001', 'device002'],
+        selectedMetrics: {
+            hum: true,
+            tmp: true,
+            bat: false,
+        },
+        lineChartConfig: {
+            showLegend: true,
+            showAxisLabels: true,
+            autoScaleY: false,
+            extrapolation: {
+                enabled: true,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
+        },
+        mappings: mockMappings,
+        colorMap: mockColorMap,
+        className: 'h-96 p-4',
+    },
+};
+
+
+export const WithExponentialForecast: Story = {
+    args: {
+        groupedData: mockLineChartData,
+        selectedDevices: ['device001', 'device002'],
+        selectedMetrics: {
+            hum: true,
+            tmp: false,
+            bat: false,
+        },
+        lineChartConfig: {
+            showLegend: true,
+            showAxisLabels: true,
+            autoScaleY: false,
+            extrapolation: {
+                enabled: true,
+                method: 'exponential',
+                points: 8,
+                windowSize: 15,
+            },
+        },
+        mappings: mockMappings,
+        colorMap: mockColorMap,
+        metricKey: 'hum',
+        className: 'h-96 p-4',
+    },
+};
+
+
+export const WithMovingAverageForecast: Story = {
+    args: {
+        groupedData: mockLineChartData,
+        selectedDevices: ['device001', 'device002', 'device003'],
+        selectedMetrics: {
+            hum: false,
+            tmp: true,
+            bat: false,
+        },
+        lineChartConfig: {
+            showLegend: true,
+            showAxisLabels: true,
+            autoScaleY: true,
+            extrapolation: {
+                enabled: true,
+                method: 'moving-average',
+                points: 10,
+                windowSize: 20,
+            },
+        },
+        mappings: mockMappings,
+        colorMap: mockColorMap,
+        metricKey: 'tmp',
         className: 'h-96 p-4',
     },
 };

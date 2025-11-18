@@ -17,6 +17,7 @@ interface ChartControlsProps {
     onDevicesChange: (devices: string[]) => void;
     mappings: Record<string, string>;
     colorMap: Record<string, string>;
+    viewMode?: 'line' | 'heatmap' | 'table';
 }
 
 export const ChartControls: React.FC<ChartControlsProps> = ({
@@ -31,6 +32,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
     onDevicesChange,
     mappings,
     colorMap,
+    viewMode = 'line',
 }) => {
     return (
         <div className="flex flex-col gap-4 mb-4">
@@ -48,9 +50,9 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
                 <ChartConfigSelector
                     config={chartConfig}
                     onChange={onChartConfigChange}
+                    viewMode={viewMode}
                 />
             </div>
-
             <DeviceSelector
                 devices={devices}
                 selectedDevices={selectedDevices}

@@ -34,7 +34,7 @@ export interface ApiResponse {
     ts?: number;
 }
 
-export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w";
+export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w" | "1m";
 export type MetricKey = "hum" | "tmp" | "bat";
 export type MetricLabel = "Humidity" | "Temperature" | "Battery";
 
@@ -48,6 +48,10 @@ export interface ChartConfig {
     showLegend: boolean;
     showAxisLabels: boolean;
     splitCharts: boolean;
+    enableExtrapolation?: boolean;
+    forecastMethod?: 'linear' | 'exponential' | 'moving-average';
+    forecastPoints?: number;
+    forecastWindowSize?: number;
 }
 
 export interface DeviceData {

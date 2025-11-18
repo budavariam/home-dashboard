@@ -9,6 +9,7 @@ const TIME_RANGES = [
     { value: "48h", label: "Last 2 Days" },
     { value: "1w", label: "Last Week" },
     { value: "2w", label: "Past 2 Weeks" },
+    { value: "1m", label: "Last Month" },
 ] as const;
 
 interface TimeRangeSelectorProps {

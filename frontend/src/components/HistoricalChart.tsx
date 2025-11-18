@@ -17,6 +17,7 @@ import { ChartControls } from "./ChartControls";
 import { LineChartComponent } from "./LineChartComponent";
 import { HeatmapComponent } from "./HeatmapComponent";
 import { TableComponent } from "./TableComponent";
+import { formatTimestamp } from "../utils/time";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -27,16 +28,6 @@ const METRICS = [
     { key: "tmp" as MetricKey, label: "Temperature", borderDash: [5, 5] },
     { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
 ];
-
-const formatTimestamp = (ts: number) => {
-    const date = new Date(ts);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${month}.${day} ${timeStr}`;
-};
 
 type ViewMode = 'line' | 'heatmap' | 'table';
 
@@ -62,6 +53,10 @@ const HistoricalChart: React.FC = () => {
         showLegend: true,
         showAxisLabels: true,
         splitCharts: true,
+        enableExtrapolation: false,
+        forecastMethod: 'linear',
+        forecastPoints: 5,
+        forecastWindowSize: 10,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
@@ -151,7 +146,7 @@ const HistoricalChart: React.FC = () => {
     }, []);
 
     const renderSplitView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig } = props;
 
         const activeMetrics = METRICS.filter(({ key }) => selectedMetrics[key]);
 
@@ -168,6 +163,17 @@ const HistoricalChart: React.FC = () => {
                             colorMap={colorMap}
                             metricKey={key}
                             className="mb-6 h-[400px]"
+                            lineChartConfig={{
+                                showLegend: chartConfig.showLegend,
+                                showAxisLabels: chartConfig.showAxisLabels,
+                                autoScaleY: false,
+                                extrapolation: {
+                                    enabled: chartConfig.enableExtrapolation || false,
+                                    method: chartConfig.forecastMethod || 'linear',
+                                    points: chartConfig.forecastPoints || 5,
+                                    windowSize: chartConfig.forecastWindowSize || 10,
+                                },
+                            }}
                         />
                     );
 
@@ -193,6 +199,12 @@ const HistoricalChart: React.FC = () => {
                             mappings={mappings}
                             className="mb-6"
                             splitView={true}
+                            extrapolation={chartConfig.enableExtrapolation ? {
+                                enabled: true,
+                                method: chartConfig.forecastMethod || 'linear',
+                                points: chartConfig.forecastPoints || 5,
+                                windowSize: chartConfig.forecastWindowSize || 10,
+                            } : undefined}
                         />
                     );
 
@@ -203,7 +215,7 @@ const HistoricalChart: React.FC = () => {
     };
 
     const renderCombinedView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig } = props;
 
         switch (viewMode) {
             case 'line':
@@ -215,6 +227,17 @@ const HistoricalChart: React.FC = () => {
                         mappings={mappings}
                         colorMap={colorMap}
                         className="h-[400px]"
+                        lineChartConfig={{
+                            showLegend: chartConfig.showLegend,
+                            showAxisLabels: chartConfig.showAxisLabels,
+                            autoScaleY: false,
+                            extrapolation: {
+                                enabled: chartConfig.enableExtrapolation || false,
+                                method: chartConfig.forecastMethod || 'linear',
+                                points: chartConfig.forecastPoints || 5,
+                                windowSize: chartConfig.forecastWindowSize || 10,
+                            },
+                        }}
                     />
                 );
 
@@ -235,6 +258,12 @@ const HistoricalChart: React.FC = () => {
                         mappings={mappings}
                         className="mb-6"
                         splitView={false}
+                        extrapolation={chartConfig.enableExtrapolation ? {
+                            enabled: true,
+                            method: chartConfig.forecastMethod || 'linear',
+                            points: chartConfig.forecastPoints || 5,
+                            windowSize: chartConfig.forecastWindowSize || 10,
+                        } : undefined}
                     />
                 );
 
@@ -315,6 +344,7 @@ const HistoricalChart: React.FC = () => {
                 onDevicesChange={setSelectedDevices}
                 mappings={mappings}
                 colorMap={colorMap}
+                viewMode={viewMode} 
             />
 
             {isLoading && (

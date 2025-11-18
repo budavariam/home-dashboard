@@ -10,6 +10,7 @@ const TIME_RANGES: Record<TimeRange, number> = {
     "48h": 48 * 3600 * 1000,
     "1w": 7 * 24 * 3600 * 1000,
     "2w": 14 * 24 * 3600 * 1000,
+    "1m": 30 * 24 * 3600 * 1000,
 };
 
 export const fetchHistoricalData = async (

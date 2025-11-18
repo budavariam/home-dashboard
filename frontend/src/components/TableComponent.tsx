@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { MetricKey, GroupedData } from '../types';
-
+import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
 
 interface TableComponentProps {
     groupedData: GroupedData;
@@ -10,14 +10,13 @@ interface TableComponentProps {
     mappings: Record<string, string>;
     className?: string;
     splitView?: boolean;
+    extrapolation?: ExtrapolationConfig;
 }
-
 
 type SortConfig = {
     key: 'timestamp' | string;
     direction: 'asc' | 'desc';
 } | null;
-
 
 const METRIC_ORDER: MetricKey[] = ['tmp', 'hum', 'bat'];
 
@@ -27,13 +26,21 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     selectedMetric,
     selectedMetrics,
     mappings,
+    extrapolation,
     className = "",
     splitView = true
 }) => {
-    const [sortConfig, setSortConfig] = useState<SortConfig>({key: 'timestamp', direction: 'desc'});
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
 
-    const devices = selectedDevices.filter(device => groupedData[device]);
-    const uniqueTimestamps = useMemo(() => Object.values(groupedData)[0]?.timestamps || [], [groupedData]);
+    // Apply extrapolation if enabled
+    const processedData = useMemo(() => {
+        if (!extrapolation || !extrapolation.enabled) return groupedData;
+        return extrapolateGroupedData(groupedData, extrapolation);
+    }, [groupedData, extrapolation]);
+
+    const originalLength = Object.values(groupedData)[0]?.timestamps.length || 0;
+    const devices = selectedDevices.filter(device => processedData[device]);
+    const uniqueTimestamps = useMemo(() => Object.values(processedData)[0]?.timestamps || [], [processedData]);
 
     const activeMetrics = useMemo(() => {
         if (!selectedMetrics || splitView) {
@@ -42,7 +49,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         return METRIC_ORDER.filter(metric => selectedMetrics[metric]);
     }, [selectedMetrics, splitView]);
 
-    // Calculate statistics for each device and metric
+    // Calculate statistics for each device and metric (only on original data, not extrapolated)
     const calculateStats = useMemo(() => {
         const stats: Record<string, Record<MetricKey, { avg: number; median: number; min: number; max: number }>> = {};
 
@@ -51,7 +58,10 @@ export const TableComponent: React.FC<TableComponentProps> = ({
 
             if (splitView) {
                 // For split view, calculate stats for the selected metric only
-                const values = groupedData[device][selectedMetric].filter((v): v is number => v !== null);
+                // Use only original data for statistics
+                const values = groupedData[device][selectedMetric]
+                    .slice(0, originalLength)
+                    .filter((v): v is number => v !== null);
 
                 if (values.length === 0) {
                     stats[device][selectedMetric] = { avg: 0, median: 0, min: 0, max: 0 };
@@ -71,7 +81,9 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             } else {
                 // For combined view, calculate stats for each active metric separately
                 activeMetrics.forEach(metric => {
-                    const values = groupedData[device][metric].filter((v): v is number => v !== null);
+                    const values = groupedData[device][metric]
+                        .slice(0, originalLength)
+                        .filter((v): v is number => v !== null);
 
                     if (values.length === 0) {
                         stats[device][metric] = { avg: 0, median: 0, min: 0, max: 0 };
@@ -93,7 +105,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         });
 
         return stats;
-    }, [devices, groupedData, selectedMetric, splitView, activeMetrics]);
+    }, [devices, groupedData, selectedMetric, splitView, activeMetrics, originalLength]);
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
@@ -104,20 +116,20 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         }
     };
 
-    const formatValue = (value: number | null): string => {
+    const formatValue = (value: number | null, isExtrapolated: boolean = false): string => {
         if (value === null) return 'N/A';
-        return value.toFixed(1);
+        return isExtrapolated ? `~${value.toFixed(1)}` : value.toFixed(1);
     };
 
     const formatStatValue = (value: number): string => {
         return value.toFixed(2);
     };
 
-    const formatCombinedValue = (device: string, timestampIndex: number): string => {
+    const formatCombinedValue = (device: string, timestampIndex: number, isExtrapolated: boolean = false): string => {
         return activeMetrics
             .map(metric => {
-                const value = groupedData[device][metric][timestampIndex];
-                return formatValue(value);
+                const value = processedData[device][metric][timestampIndex];
+                return formatValue(value, isExtrapolated);
             })
             .join(' / ');
     };
@@ -166,12 +178,12 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             } else {
                 const device = sortConfig.key;
                 if (splitView) {
-                    aValue = groupedData[device][selectedMetric][a];
-                    bValue = groupedData[device][selectedMetric][b];
+                    aValue = processedData[device][selectedMetric][a];
+                    bValue = processedData[device][selectedMetric][b];
                 } else {
                     const firstMetric = activeMetrics[0];
-                    aValue = groupedData[device][firstMetric][a];
-                    bValue = groupedData[device][firstMetric][b];
+                    aValue = processedData[device][firstMetric][a];
+                    bValue = processedData[device][firstMetric][b];
                 }
             }
 
@@ -187,7 +199,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             }
             return 0;
         });
-    }, [uniqueTimestamps, sortConfig, groupedData, selectedMetric, splitView, activeMetrics]);
+    }, [uniqueTimestamps, sortConfig, processedData, selectedMetric, splitView, activeMetrics]);
 
     const SortIndicator: React.FC<{ columnKey: string }> = ({ columnKey }) => {
         if (!sortConfig || sortConfig.key !== columnKey) {
@@ -216,11 +228,20 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         );
     }
 
+    const hasExtrapolation = extrapolation?.enabled && uniqueTimestamps.length > originalLength;
+
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${className}`}>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                {getTitle()}
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    {getTitle()}
+                </h3>
+                {hasExtrapolation && (
+                    <span className="text-xs text-blue-600 dark:text-blue-400 italic">
+                        {originalLength} actual + {uniqueTimestamps.length - originalLength} forecast rows
+                    </span>
+                )}
+            </div>
 
             <div className="overflow-auto max-h-[600px] border border-gray-300 dark:border-gray-600 rounded">
                 <table className="min-w-full border-collapse">
@@ -246,35 +267,49 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedIndices.map((timestampIndex) => (
-                            <tr
-                                key={timestampIndex}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
-                            >
-                                <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
-                                    {uniqueTimestamps[timestampIndex]}
-                                </td>
-                                {devices.map((device) => {
-                                    const displayValue = splitView
-                                        ? formatValue(groupedData[device][selectedMetric][timestampIndex])
-                                        : formatCombinedValue(device, timestampIndex);
+                        {sortedIndices.map((timestampIndex) => {
+                            const isExtrapolated = timestampIndex >= originalLength;
+                            return (
+                                <tr
+                                    key={timestampIndex}
+                                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 ${
+                                        isExtrapolated ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                    }`}
+                                >
+                                    <td className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
+                                        isExtrapolated 
+                                            ? 'text-blue-700 dark:text-blue-300 italic' 
+                                            : 'text-gray-700 dark:text-gray-300'
+                                    }`}>
+                                        {isExtrapolated && '📊 '}
+                                        {uniqueTimestamps[timestampIndex]}
+                                    </td>
+                                    {devices.map((device) => {
+                                        const displayValue = splitView
+                                            ? formatValue(processedData[device][selectedMetric][timestampIndex], isExtrapolated)
+                                            : formatCombinedValue(device, timestampIndex, isExtrapolated);
 
-                                    return (
-                                        <td
-                                            key={device}
-                                            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right"
-                                            style={{
-                                                fontFamily: 'monospace',
-                                                fontVariantNumeric: 'tabular-nums',
-                                                fontFeatureSettings: '"tnum"'
-                                            }}
-                                        >
-                                            {displayValue}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                                        return (
+                                            <td
+                                                key={device}
+                                                className={`px-4 py-2 text-sm text-right ${
+                                                    isExtrapolated 
+                                                        ? 'text-blue-700 dark:text-blue-300 italic' 
+                                                        : 'text-gray-700 dark:text-gray-300'
+                                                }`}
+                                                style={{
+                                                    fontFamily: 'monospace',
+                                                    fontVariantNumeric: 'tabular-nums',
+                                                    fontFeatureSettings: '"tnum"'
+                                                }}
+                                            >
+                                                {displayValue}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                     <tfoot className="bg-gray-100 dark:bg-gray-700 sticky bottom-0">
                         {['min', 'avg', 'median', 'max'].map((statType) => (

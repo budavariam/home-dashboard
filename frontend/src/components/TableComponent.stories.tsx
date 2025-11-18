@@ -272,3 +272,58 @@ export const WithoutMappings: Story = {
         splitView: true,
     },
 };
+
+// Extrapolation Stories
+
+export const WithLinearForecast: Story = {
+    args: {
+        groupedData: mockTableDataFull,
+        selectedDevices: getDevicesFromGroupedData(mockTableDataFull),
+        selectedMetric: 'tmp',
+        mappings: mockMappings,
+        splitView: true,
+        extrapolation: {
+            enabled: true,
+            method: 'linear',
+            points: 5,
+            windowSize: 10,
+        },
+    },
+};
+
+export const CombinedViewWithForecast: Story = {
+    args: {
+        groupedData: mockTableDataFull,
+        selectedDevices: getDevicesFromGroupedData(mockTableDataFull),
+        selectedMetric: 'tmp',
+        selectedMetrics: {
+            hum: true,
+            tmp: true,
+            bat: true,
+        },
+        mappings: mockMappings,
+        splitView: false,
+        extrapolation: {
+            enabled: true,
+            method: 'exponential',
+            points: 8,
+            windowSize: 15,
+        },
+    },
+};
+
+export const WithMovingAverageForecast: Story = {
+    args: {
+        groupedData: mockTableDataFull,
+        selectedDevices: ['device001', 'device002'],
+        selectedMetric: 'hum',
+        mappings: mockMappings,
+        splitView: true,
+        extrapolation: {
+            enabled: true,
+            method: 'moving-average',
+            points: 10,
+            windowSize: 20,
+        },
+    },
+};
