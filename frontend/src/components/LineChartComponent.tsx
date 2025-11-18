@@ -82,7 +82,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
 
     const createDatasets = (targetMetricKey: MetricKey) => {
         const metric = METRICS.find(m => m.key === targetMetricKey)!;
-        
+
         return Object.entries(processedData)
             .filter(([device]) => selectedDevices.includes(device))
             .map(([device, data]) => ({
@@ -102,17 +102,16 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     const index = context.dataIndex;
                     return index >= originalLength ? 5 : 4;
                 },
-                pointStyle: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? 'triangle' as const : 'circle' as const;
+                pointStyle: () => {
+                    return 'circle' as const;
                 },
                 pointBackgroundColor: (context: ScriptableContext<'line'>) => {
                     const index = context.dataIndex;
-                    return index >= originalLength ? `${colorMap[device]}60` : colorMap[device];
+                    return index >= originalLength ? 'transparent' : colorMap[device];
                 },
                 pointBorderColor: (context: ScriptableContext<'line'>) => {
                     const index = context.dataIndex;
-                    return index >= originalLength ? colorMap[device] : colorMap[device];
+                    return index >= originalLength ? `${colorMap[device]}80` : colorMap[device];
                 },
                 pointBorderWidth: (context: ScriptableContext<'line'>) => {
                     const index = context.dataIndex;
@@ -131,6 +130,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                 },
             }));
     };
+
 
     const datasets = metricKey
         ? createDatasets(metricKey)
@@ -198,7 +198,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     autoSkip: true,
                     maxTicksLimit: 15,
                 },
-                grid: { 
+                grid: {
                     color: (context) => {
                         const index = context.index;
                         return index === originalLength ? "#3B82F6" : "#4B5563";
