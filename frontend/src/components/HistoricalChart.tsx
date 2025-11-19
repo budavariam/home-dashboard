@@ -214,6 +214,7 @@ const HistoricalChart: React.FC = () => {
                                 points: chartConfig.forecastPoints || 5,
                                 windowSize: chartConfig.forecastWindowSize || 10,
                             } : undefined}
+                            compareLastPeriod={chartConfig.compareLastPeriod}
                         />
                     );
 
@@ -281,6 +282,7 @@ const HistoricalChart: React.FC = () => {
                             points: chartConfig.forecastPoints || 5,
                             windowSize: chartConfig.forecastWindowSize || 10,
                         } : undefined}
+                        compareLastPeriod={chartConfig.compareLastPeriod}
                     />
                 );
 

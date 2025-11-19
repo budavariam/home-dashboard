@@ -11,6 +11,7 @@ interface TableComponentProps {
     className?: string;
     splitView?: boolean;
     extrapolation?: ExtrapolationConfig;
+    compareLastPeriod?: boolean;
 }
 
 type SortConfig = {
@@ -28,43 +29,88 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     mappings,
     extrapolation,
     className = "",
-    splitView = true
+    splitView = true,
+    compareLastPeriod = false,
 }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
 
-    // Apply extrapolation if enabled
-    const processedData = useMemo(() => {
-        if (!extrapolation || !extrapolation.enabled) return groupedData;
-        return extrapolateGroupedData(groupedData, extrapolation);
-    }, [groupedData, extrapolation]);
-
-    const originalLength = Object.values(groupedData)[0]?.timestamps.length || 0;
-    const devices = selectedDevices.filter(device => processedData[device]);
-    const uniqueTimestamps = useMemo(() => Object.values(processedData)[0]?.timestamps || [], [processedData]);
-
+    // Determine active metrics for display
     const activeMetrics = useMemo(() => {
-        if (!selectedMetrics || splitView) {
+        if (splitView) {
+            return [selectedMetric];
+        }
+        if (!selectedMetrics) {
             return METRIC_ORDER;
         }
         return METRIC_ORDER.filter(metric => selectedMetrics[metric]);
-    }, [selectedMetrics, splitView]);
+    }, [selectedMetrics, splitView, selectedMetric]);
 
-    // Calculate statistics for each device and metric (only on original data, not extrapolated)
+    // Split data into current and previous periods if comparison is enabled
+    const { currentData, previousData, uniqueTimestamps, originalLength } = useMemo(() => {
+        const firstDevice = Object.values(groupedData)[0];
+        if (!firstDevice) {
+            return { currentData: {}, previousData: null, uniqueTimestamps: [], originalLength: 0 };
+        }
+
+        if (!compareLastPeriod) {
+            const extrapolated = extrapolateGroupedData(groupedData, extrapolation || { enabled: false, method: 'linear', points: 5, windowSize: 10 });
+            const origLen = firstDevice.timestamps.length;
+            return {
+                currentData: extrapolated,
+                previousData: null,
+                uniqueTimestamps: Object.values(extrapolated)[0]?.timestamps || [],
+                originalLength: origLen
+            };
+        }
+
+        const midpoint = Math.floor(firstDevice.timestamps.length / 2);
+        const currentTimestamps = firstDevice.timestamps.slice(midpoint);
+
+        const current: GroupedData = {};
+        const previous: GroupedData = {};
+
+        for (const device in groupedData) {
+            current[device] = { timestamps: [], hum: [], tmp: [], bat: [] };
+            previous[device] = { timestamps: [], hum: [], tmp: [], bat: [] };
+
+            for (const key of METRIC_ORDER) {
+                const data = groupedData[device][key] || [];
+                current[device][key] = data.slice(midpoint);
+                previous[device][key] = data.slice(0, midpoint);
+            }
+            current[device].timestamps = currentTimestamps;
+            previous[device].timestamps = currentTimestamps;
+        }
+
+        const extrapolated = extrapolateGroupedData(current, extrapolation || { enabled: false, method: 'linear', points: 5, windowSize: 10 });
+        const origLen = currentTimestamps.length;
+        const newLabels = Object.values(extrapolated)[0]?.timestamps || [];
+
+        return {
+            currentData: extrapolated,
+            previousData: previous,
+            uniqueTimestamps: newLabels,
+            originalLength: origLen
+        };
+    }, [groupedData, extrapolation, compareLastPeriod]);
+
+    const processedData = currentData;
+    const devices = selectedDevices.filter(device => processedData[device]);
+
     const calculateStats = useMemo(() => {
         const stats: Record<string, Record<MetricKey, { avg: number; median: number; min: number; max: number }>> = {};
 
         devices.forEach(device => {
             stats[device] = {} as Record<MetricKey, { avg: number; median: number; min: number; max: number }>;
 
-            if (splitView) {
-                // For split view, calculate stats for the selected metric only
-                // Use only original data for statistics
-                const values = groupedData[device][selectedMetric]
-                    .slice(0, originalLength)
-                    .filter((v): v is number => v !== null);
+            // Calculate stats for each active metric
+            activeMetrics.forEach(metric => {
+                const values = currentData[device]?.[metric]
+                    ?.slice(0, originalLength)
+                    .filter((v): v is number => v !== null && v !== undefined) || [];
 
                 if (values.length === 0) {
-                    stats[device][selectedMetric] = { avg: 0, median: 0, min: 0, max: 0 };
+                    stats[device][metric] = { avg: 0, median: 0, min: 0, max: 0 };
                 } else {
                     const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
                     const min = Math.min(...values);
@@ -76,36 +122,47 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                         ? (sorted[mid - 1] + sorted[mid]) / 2
                         : sorted[mid];
 
-                    stats[device][selectedMetric] = { avg, median, min, max };
+                    stats[device][metric] = { avg, median, min, max };
                 }
-            } else {
-                // For combined view, calculate stats for each active metric separately
-                activeMetrics.forEach(metric => {
-                    const values = groupedData[device][metric]
-                        .slice(0, originalLength)
-                        .filter((v): v is number => v !== null);
-
-                    if (values.length === 0) {
-                        stats[device][metric] = { avg: 0, median: 0, min: 0, max: 0 };
-                    } else {
-                        const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
-                        const min = Math.min(...values);
-                        const max = Math.max(...values);
-
-                        const sorted = [...values].sort((a, b) => a - b);
-                        const mid = Math.floor(sorted.length / 2);
-                        const median = sorted.length % 2 === 0
-                            ? (sorted[mid - 1] + sorted[mid]) / 2
-                            : sorted[mid];
-
-                        stats[device][metric] = { avg, median, min, max };
-                    }
-                });
-            }
+            });
         });
 
         return stats;
-    }, [devices, groupedData, selectedMetric, splitView, activeMetrics, originalLength]);
+    }, [devices, currentData, activeMetrics, originalLength]);
+
+    const calculatePreviousStats = useMemo(() => {
+        if (!compareLastPeriod || !previousData) return null;
+
+        const stats: Record<string, Record<MetricKey, { avg: number; median: number; min: number; max: number }>> = {};
+
+        devices.forEach(device => {
+            stats[device] = {} as Record<MetricKey, { avg: number; median: number; min: number; max: number }>;
+
+            // Calculate stats for each active metric from previous period
+            activeMetrics.forEach(metric => {
+                const values = previousData[device]?.[metric]
+                    ?.filter((v): v is number => v !== null && v !== undefined) || [];
+
+                if (values.length === 0) {
+                    stats[device][metric] = { avg: 0, median: 0, min: 0, max: 0 };
+                } else {
+                    const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+
+                    const sorted = [...values].sort((a, b) => a - b);
+                    const mid = Math.floor(sorted.length / 2);
+                    const median = sorted.length % 2 === 0
+                        ? (sorted[mid - 1] + sorted[mid]) / 2
+                        : sorted[mid];
+
+                    stats[device][metric] = { avg, median, min, max };
+                }
+            });
+        });
+
+        return stats;
+    }, [devices, previousData, activeMetrics, compareLastPeriod]);
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
@@ -116,8 +173,8 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         }
     };
 
-    const formatValue = (value: number | null, isExtrapolated: boolean = false): string => {
-        if (value === null) return 'N/A';
+    const formatValue = (value: number | null | undefined, isExtrapolated: boolean = false): string => {
+        if (value === null || value === undefined) return 'N/A';
         return isExtrapolated ? `~${value.toFixed(1)}` : value.toFixed(1);
     };
 
@@ -128,7 +185,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     const formatCombinedValue = (device: string, timestampIndex: number, isExtrapolated: boolean = false): string => {
         return activeMetrics
             .map(metric => {
-                const value = processedData[device][metric][timestampIndex];
+                const value = processedData[device]?.[metric]?.[timestampIndex];
                 return formatValue(value, isExtrapolated);
             })
             .join(' / ');
@@ -137,16 +194,23 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     const formatCombinedStats = (device: string, statType: 'avg' | 'median' | 'min' | 'max'): string => {
         return activeMetrics
             .map(metric => {
-                const value = calculateStats[device][metric][statType];
-                return formatStatValue(value);
+                const value = calculateStats[device]?.[metric]?.[statType];
+                return value !== undefined ? formatStatValue(value) : 'N/A';
+            })
+            .join(' / ');
+    };
+
+    const formatCombinedPreviousStats = (device: string, statType: 'avg' | 'median' | 'min' | 'max'): string => {
+        if (!calculatePreviousStats) return 'N/A';
+        return activeMetrics
+            .map(metric => {
+                const value = calculatePreviousStats[device]?.[metric]?.[statType];
+                return value !== undefined ? formatStatValue(value) : 'N/A';
             })
             .join(' / ');
     };
 
     const getTitle = (): string => {
-        if (splitView) {
-            return `${getMetricLabel(selectedMetric)} Data Table`;
-        }
         const metricLabels = activeMetrics.map(m => getMetricLabel(m)).join(', ');
         return metricLabels ? `${metricLabels} Data Table` : 'Data Table';
     };
@@ -169,27 +233,22 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         }
 
         return [...indices].sort((a, b) => {
-            let aValue: string | number | null;
-            let bValue: string | number | null;
+            let aValue: string | number | null | undefined;
+            let bValue: string | number | null | undefined;
 
             if (sortConfig.key === 'timestamp') {
                 aValue = uniqueTimestamps[a];
                 bValue = uniqueTimestamps[b];
             } else {
                 const device = sortConfig.key;
-                if (splitView) {
-                    aValue = processedData[device][selectedMetric][a];
-                    bValue = processedData[device][selectedMetric][b];
-                } else {
-                    const firstMetric = activeMetrics[0];
-                    aValue = processedData[device][firstMetric][a];
-                    bValue = processedData[device][firstMetric][b];
-                }
+                const firstMetric = activeMetrics[0];
+                aValue = processedData[device]?.[firstMetric]?.[a];
+                bValue = processedData[device]?.[firstMetric]?.[b];
             }
 
-            if (aValue === null && bValue === null) return 0;
-            if (aValue === null) return 1;
-            if (bValue === null) return -1;
+            if ((aValue === null || aValue === undefined) && (bValue === null || bValue === undefined)) return 0;
+            if (aValue === null || aValue === undefined) return 1;
+            if (bValue === null || bValue === undefined) return -1;
 
             if (aValue < bValue) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
@@ -199,7 +258,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             }
             return 0;
         });
-    }, [uniqueTimestamps, sortConfig, processedData, selectedMetric, splitView, activeMetrics]);
+    }, [uniqueTimestamps, sortConfig, processedData, activeMetrics]);
 
     const SortIndicator: React.FC<{ columnKey: string }> = ({ columnKey }) => {
         if (!sortConfig || sortConfig.key !== columnKey) {
@@ -220,7 +279,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         );
     }
 
-    if (!splitView && activeMetrics.length === 0) {
+    if (activeMetrics.length === 0) {
         return (
             <div className={`text-center text-gray-500 p-8 ${className}`}>
                 No metrics selected
@@ -255,14 +314,22 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 <SortIndicator columnKey="timestamp" />
                             </th>
                             {devices.map((device) => (
-                                <th
-                                    key={device}
-                                    className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                    onClick={() => handleSort(device)}
-                                >
-                                    {mappings[device] || device}
-                                    <SortIndicator columnKey={device} />
-                                </th>
+                                <React.Fragment key={device}>
+                                    <th
+                                        className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                        onClick={() => handleSort(device)}
+                                    >
+                                        {mappings[device] || device}
+                                        <SortIndicator columnKey={device} />
+                                    </th>
+                                    {compareLastPeriod && previousData && (
+                                        <th
+                                            className="px-4 py-3 text-left text-sm font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap"
+                                        >
+                                            {mappings[device] || device} (Prev)
+                                        </th>
+                                    )}
+                                </React.Fragment>
                             ))}
                         </tr>
                     </thead>
@@ -272,39 +339,54 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                             return (
                                 <tr
                                     key={timestampIndex}
-                                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 ${
-                                        isExtrapolated ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                                    }`}
+                                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 ${isExtrapolated ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                        }`}
                                 >
-                                    <td className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
-                                        isExtrapolated 
-                                            ? 'text-blue-700 dark:text-blue-300 italic' 
+                                    <td className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${isExtrapolated
+                                            ? 'text-blue-700 dark:text-blue-300 italic'
                                             : 'text-gray-700 dark:text-gray-300'
-                                    }`}>
+                                        }`}>
                                         {isExtrapolated && '📊 '}
                                         {uniqueTimestamps[timestampIndex]}
                                     </td>
                                     {devices.map((device) => {
-                                        const displayValue = splitView
-                                            ? formatValue(processedData[device][selectedMetric][timestampIndex], isExtrapolated)
-                                            : formatCombinedValue(device, timestampIndex, isExtrapolated);
+                                        const displayValue = formatCombinedValue(device, timestampIndex, isExtrapolated);
+
+                                        const previousValue = compareLastPeriod && previousData && timestampIndex < originalLength
+                                            ? activeMetrics.map(metric => {
+                                                const val = previousData[device]?.[metric]?.[timestampIndex];
+                                                return formatValue(val, false);
+                                            }).join(' / ')
+                                            : null;
 
                                         return (
-                                            <td
-                                                key={device}
-                                                className={`px-4 py-2 text-sm text-right ${
-                                                    isExtrapolated 
-                                                        ? 'text-blue-700 dark:text-blue-300 italic' 
-                                                        : 'text-gray-700 dark:text-gray-300'
-                                                }`}
-                                                style={{
-                                                    fontFamily: 'monospace',
-                                                    fontVariantNumeric: 'tabular-nums',
-                                                    fontFeatureSettings: '"tnum"'
-                                                }}
-                                            >
-                                                {displayValue}
-                                            </td>
+                                            <React.Fragment key={device}>
+                                                <td
+                                                    className={`px-4 py-2 text-sm text-right ${isExtrapolated
+                                                            ? 'text-blue-700 dark:text-blue-300 italic'
+                                                            : 'text-gray-700 dark:text-gray-300'
+                                                        }`}
+                                                    style={{
+                                                        fontFamily: 'monospace',
+                                                        fontVariantNumeric: 'tabular-nums',
+                                                        fontFeatureSettings: '"tnum"'
+                                                    }}
+                                                >
+                                                    {displayValue}
+                                                </td>
+                                                {compareLastPeriod && previousData && (
+                                                    <td
+                                                        className="px-4 py-2 text-sm text-right text-gray-500 dark:text-gray-400"
+                                                        style={{
+                                                            fontFamily: 'monospace',
+                                                            fontVariantNumeric: 'tabular-nums',
+                                                            fontFeatureSettings: '"tnum"'
+                                                        }}
+                                                    >
+                                                        {previousValue || 'N/A'}
+                                                    </td>
+                                                )}
+                                            </React.Fragment>
                                         );
                                     })}
                                 </tr>
@@ -318,22 +400,36 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                     {statType.charAt(0).toUpperCase() + statType.slice(1)}
                                 </td>
                                 {devices.map((device) => {
-                                    const displayValue = splitView
-                                        ? formatStatValue(calculateStats[device][selectedMetric][statType as keyof typeof calculateStats[string][MetricKey]])
-                                        : formatCombinedStats(device, statType as 'avg' | 'median' | 'min' | 'max');
+                                    const displayValue = formatCombinedStats(device, statType as 'avg' | 'median' | 'min' | 'max');
+                                    const previousDisplayValue = compareLastPeriod && calculatePreviousStats
+                                        ? formatCombinedPreviousStats(device, statType as 'avg' | 'median' | 'min' | 'max')
+                                        : null;
 
                                     return (
-                                        <td
-                                            key={device}
-                                            className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 text-right"
-                                            style={{
-                                                fontFamily: 'monospace',
-                                                fontVariantNumeric: 'tabular-nums',
-                                                fontFeatureSettings: '"tnum"'
-                                            }}
-                                        >
-                                            {displayValue}
-                                        </td>
+                                        <React.Fragment key={device}>
+                                            <td
+                                                className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 text-right"
+                                                style={{
+                                                    fontFamily: 'monospace',
+                                                    fontVariantNumeric: 'tabular-nums',
+                                                    fontFeatureSettings: '"tnum"'
+                                                }}
+                                            >
+                                                {displayValue}
+                                            </td>
+                                            {compareLastPeriod && previousData && (
+                                                <td
+                                                    className="px-4 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400 text-right"
+                                                    style={{
+                                                        fontFamily: 'monospace',
+                                                        fontVariantNumeric: 'tabular-nums',
+                                                        fontFeatureSettings: '"tnum"'
+                                                    }}
+                                                >
+                                                    {previousDisplayValue || 'N/A'}
+                                                </td>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </tr>
