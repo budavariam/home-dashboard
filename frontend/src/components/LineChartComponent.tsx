@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Line } from "react-chartjs-2";
 import { ChartOptions, ScriptableContext, ScriptableLineSegmentContext, ChartDataset } from "chart.js";
-import { MetricKey, GroupedData, DeviceData } from '../types';
+import { MetricKey, GroupedData } from '../types';
 import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
 
 const METRICS = [

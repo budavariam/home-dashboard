@@ -168,7 +168,7 @@ const HistoricalChart: React.FC = () => {
                             lineChartConfig={{
                                 showLegend: chartConfig.showLegend,
                                 showAxisLabels: chartConfig.showAxisLabels,
-                                autoScaleY: chartConfig.autoScaleY,
+                                autoScaleY: chartConfig.autoScaleY ?? false,
                                 extrapolation: {
                                     enabled: chartConfig.enableExtrapolation || false,
                                     method: chartConfig.forecastMethod || 'linear',
@@ -239,7 +239,7 @@ const HistoricalChart: React.FC = () => {
                         lineChartConfig={{
                             showLegend: chartConfig.showLegend,
                             showAxisLabels: chartConfig.showAxisLabels,
-                            autoScaleY: chartConfig.autoScaleY,
+                            autoScaleY: chartConfig.autoScaleY ?? false, 
                             extrapolation: {
                                 enabled: chartConfig.enableExtrapolation || false,
                                 method: chartConfig.forecastMethod || 'linear',
