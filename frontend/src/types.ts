@@ -52,6 +52,8 @@ export interface ChartConfig {
     forecastMethod?: 'linear' | 'exponential' | 'moving-average';
     forecastPoints?: number;
     forecastWindowSize?: number;
+    compareLastPeriod?: boolean;
+    autoScaleY?: boolean;
 }
 
 export interface DeviceData {

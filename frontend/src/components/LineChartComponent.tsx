@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Line } from "react-chartjs-2";
-import { ChartOptions, ScriptableContext, ScriptableLineSegmentContext } from "chart.js";
-import { MetricKey, GroupedData } from '../types';
+import { ChartOptions, ScriptableContext, ScriptableLineSegmentContext, ChartDataset } from "chart.js";
+import { MetricKey, GroupedData, DeviceData } from '../types';
 import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
 
 const METRICS = [
@@ -15,6 +15,7 @@ export interface LineChartConfig {
     showAxisLabels: boolean;
     autoScaleY: boolean;
     extrapolation: ExtrapolationConfig;
+    compareLastPeriod?: boolean;
 }
 
 interface LineChartComponentProps {
@@ -39,6 +40,7 @@ const defaultLineChartConfig: LineChartConfig = {
         points: 5,
         windowSize: 10,
     },
+    compareLastPeriod: false,
 };
 
 export const LineChartComponent: React.FC<LineChartComponentProps> = ({
@@ -72,63 +74,97 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
         }
     };
 
-    // Apply extrapolation if enabled
-    const processedData = useMemo(() => {
-        return extrapolateGroupedData(groupedData, config.extrapolation);
-    }, [groupedData, config.extrapolation]);
+    const { currentData, previousData, labels, originalLength, totalLength } = useMemo(() => {
+        const firstDevice = Object.values(groupedData)[0];
+        if (!firstDevice) {
+            return { currentData: {}, previousData: null, labels: [], originalLength: 0, totalLength: 0 };
+        }
 
-    const originalLength = Object.values(groupedData)[0]?.timestamps.length || 0;
-    const totalLength = Object.values(processedData)[0]?.timestamps.length || 0;
+        if (!config.compareLastPeriod) {
+            const extrapolated = extrapolateGroupedData(groupedData, config.extrapolation);
+            const origLen = firstDevice.timestamps.length;
+            const totalLen = Object.values(extrapolated)[0]?.timestamps.length || origLen;
+            return { currentData: extrapolated, previousData: null, labels: Object.values(extrapolated)[0]?.timestamps || [], originalLength: origLen, totalLength: totalLen };
+        }
 
-    const createDatasets = (targetMetricKey: MetricKey) => {
+        const midpoint = Math.floor(firstDevice.timestamps.length / 2);
+        const currentTimestamps = firstDevice.timestamps.slice(midpoint);
+
+        const current: GroupedData = {};
+        const previous: GroupedData = {};
+
+        for (const device in groupedData) {
+            current[device] = { timestamps: [], hum: [], tmp: [], bat: [] };
+            previous[device] = { timestamps: [], hum: [], tmp: [], bat: [] };
+
+            for (const key of METRICS.map(m => m.key)) {
+                const data = groupedData[device][key] || [];
+                current[device][key] = data.slice(midpoint);
+                previous[device][key] = data.slice(0, midpoint);
+            }
+            current[device].timestamps = currentTimestamps;
+            previous[device].timestamps = currentTimestamps; // Use same timestamps for plotting
+        }
+        
+        const extrapolated = extrapolateGroupedData(current, config.extrapolation);
+        const origLen = currentTimestamps.length;
+        const totalLen = Object.values(extrapolated)[0]?.timestamps.length || origLen;
+        const newLabels = Object.values(extrapolated)[0]?.timestamps || [];
+        
+        return { currentData: extrapolated, previousData: previous, labels: newLabels, originalLength: origLen, totalLength: totalLen };
+
+    }, [groupedData, config.extrapolation, config.compareLastPeriod]);
+
+
+    const createDatasets = (targetMetricKey: MetricKey): ChartDataset<'line'>[] => {
         const metric = METRICS.find(m => m.key === targetMetricKey)!;
+        const datasets: ChartDataset<'line'>[] = [];
 
-        return Object.entries(processedData)
+        Object.entries(currentData)
             .filter(([device]) => selectedDevices.includes(device))
-            .map(([device, data]) => ({
-                label: `${mappings[device] || device} - ${metric.label}`,
-                data: data[targetMetricKey],
-                borderColor: colorMap[device],
-                backgroundColor: `${colorMap[device]}80`,
-                tension: 0.4,
-                borderDash: metric.borderDash,
-                spanGaps: true,
-                // Use scriptable options to style points based on whether they're extrapolated
-                pointRadius: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? 3 : 2;
-                },
-                pointHoverRadius: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? 5 : 4;
-                },
-                pointStyle: () => {
-                    return 'circle' as const;
-                },
-                pointBackgroundColor: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? 'transparent' : colorMap[device];
-                },
-                pointBorderColor: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? `${colorMap[device]}80` : colorMap[device];
-                },
-                pointBorderWidth: (context: ScriptableContext<'line'>) => {
-                    const index = context.dataIndex;
-                    return index >= originalLength ? 2 : 1;
-                },
-                // Style line segments differently for extrapolated portion
-                segment: {
-                    borderColor: (context: ScriptableLineSegmentContext) => {
-                        const index = context.p0DataIndex;
-                        return index >= originalLength - 1 ? `${colorMap[device]}80` : undefined;
+            .forEach(([device, data]) => {
+                datasets.push({
+                    label: `${mappings[device] || device} - ${metric.label}`,
+                    data: data[targetMetricKey] as (number | null)[],
+                    borderColor: colorMap[device],
+                    backgroundColor: `${colorMap[device]}80`,
+                    tension: 0.4,
+                    borderDash: metric.borderDash,
+                    spanGaps: true,
+                    pointRadius: (context: ScriptableContext<'line'>) => context.dataIndex >= originalLength ? 3 : 2,
+                    pointHoverRadius: (context: ScriptableContext<'line'>) => context.dataIndex >= originalLength ? 5 : 4,
+                    pointStyle: 'circle' as const,
+                    pointBackgroundColor: (context: ScriptableContext<'line'>) => context.dataIndex >= originalLength ? 'transparent' : colorMap[device],
+                    pointBorderColor: (context: ScriptableContext<'line'>) => context.dataIndex >= originalLength ? `${colorMap[device]}80` : colorMap[device],
+                    pointBorderWidth: (context: ScriptableContext<'line'>) => context.dataIndex >= originalLength ? 2 : 1,
+                    segment: {
+                        borderColor: (context: ScriptableLineSegmentContext) => context.p0DataIndex >= originalLength - 1 ? `${colorMap[device]}80` : undefined,
+                        borderDash: (context: ScriptableLineSegmentContext) => context.p0DataIndex >= originalLength - 1 ? [10, 5] : metric.borderDash,
                     },
-                    borderDash: (context: ScriptableLineSegmentContext) => {
-                        const index = context.p0DataIndex;
-                        return index >= originalLength - 1 ? [10, 5] : metric.borderDash;
-                    },
-                },
-            }));
+                    order: 1,
+                });
+            });
+
+        if (previousData) {
+            Object.entries(previousData)
+                .filter(([device]) => selectedDevices.includes(device))
+                .forEach(([device, data]) => {
+                    datasets.push({
+                        label: `${mappings[device] || device} - ${metric.label} (Prev)`,
+                        data: data[targetMetricKey] as (number | null)[],
+                        borderColor: `${colorMap[device]}40`,
+                        backgroundColor: `${colorMap[device]}20`,
+                        tension: 0.4,
+                        borderDash: metric.borderDash,
+                        spanGaps: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false,
+                        order: 2,
+                    });
+                });
+        }
+        return datasets;
     };
 
 
@@ -225,7 +261,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             <Line
                 options={chartOptions}
                 data={{
-                    labels: Object.values(processedData)[0]?.timestamps || [],
+                    labels,
                     datasets,
                 }}
             />

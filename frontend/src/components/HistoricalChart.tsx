@@ -57,13 +57,15 @@ const HistoricalChart: React.FC = () => {
         forecastMethod: 'linear',
         forecastPoints: 5,
         forecastWindowSize: 10,
+        compareLastPeriod: false,
+        autoScaleY: false,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
 
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
-    const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange);
+    const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange, chartConfig.compareLastPeriod);
     const { mappings } = useSensorParams();
 
     const groupedData: GroupedData = React.useMemo(() => {
@@ -166,13 +168,20 @@ const HistoricalChart: React.FC = () => {
                             lineChartConfig={{
                                 showLegend: chartConfig.showLegend,
                                 showAxisLabels: chartConfig.showAxisLabels,
-                                autoScaleY: false,
+                                autoScaleY: chartConfig.autoScaleY,
                                 extrapolation: {
                                     enabled: chartConfig.enableExtrapolation || false,
                                     method: chartConfig.forecastMethod || 'linear',
                                     points: chartConfig.forecastPoints || 5,
                                     windowSize: chartConfig.forecastWindowSize || 10,
                                 },
+                                compareLastPeriod: chartConfig.compareLastPeriod,
+                            }}
+                            onLineChartConfigChange={(newConfig) => {
+                                setChartConfig(prevConfig => ({
+                                    ...prevConfig,
+                                    ...newConfig,
+                                }));
                             }}
                         />
                     );
@@ -230,13 +239,20 @@ const HistoricalChart: React.FC = () => {
                         lineChartConfig={{
                             showLegend: chartConfig.showLegend,
                             showAxisLabels: chartConfig.showAxisLabels,
-                            autoScaleY: false,
+                            autoScaleY: chartConfig.autoScaleY,
                             extrapolation: {
                                 enabled: chartConfig.enableExtrapolation || false,
                                 method: chartConfig.forecastMethod || 'linear',
                                 points: chartConfig.forecastPoints || 5,
                                 windowSize: chartConfig.forecastWindowSize || 10,
                             },
+                            compareLastPeriod: chartConfig.compareLastPeriod,
+                        }}
+                        onLineChartConfigChange={(newConfig) => {
+                            setChartConfig(prevConfig => ({
+                                ...prevConfig,
+                                ...newConfig,
+                            }));
                         }}
                     />
                 );
@@ -247,6 +263,7 @@ const HistoricalChart: React.FC = () => {
                         Heatmap does not support combined chart mode. Please enable "Split Charts" in settings.
                     </div>
                 );
+
 
             case 'table':
                 return (

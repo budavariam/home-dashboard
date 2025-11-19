@@ -113,6 +113,19 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                     )}
                 </div>
             )}
+            {viewMode === 'line' && (
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={config.compareLastPeriod || false}
+                        onChange={(e) => onChange({
+                            ...config,
+                            compareLastPeriod: e.target.checked,
+                        })}
+                    />
+                    Compare last period
+                </label>
+            )}
         </div>
     );
 };

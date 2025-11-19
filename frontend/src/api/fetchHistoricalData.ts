@@ -18,7 +18,8 @@ export const fetchHistoricalData = async (
     timeRange: TimeRange,
     user: string | null,
     bucket: string | null,
-    token: string | null
+    token: string | null,
+    compare?: boolean
 ): Promise<ApiResponse[]> => {
     if (getMockData) {
         return getMockData()
@@ -28,7 +29,10 @@ export const fetchHistoricalData = async (
     }
 
     const now = Date.now();
-    const timeRangeMs = TIME_RANGES[timeRange];
+    let timeRangeMs = TIME_RANGES[timeRange];
+    if (compare) {
+        timeRangeMs *= 2;
+    }
     const min_ts = now - timeRangeMs;
     const max_ts = now;
 
@@ -38,7 +42,7 @@ export const fetchHistoricalData = async (
         headers: { Authorization: `Bearer ${token}` },
         params: {
             sort: "desc",
-            items: 4 * TIME_RANGES[timeRange] / (3600 * 1000),
+            items: 4 * timeRangeMs / (3600 * 1000),
             min_ts,
             max_ts
         }
