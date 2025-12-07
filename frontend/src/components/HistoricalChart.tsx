@@ -21,7 +21,11 @@ import { formatTimestamp } from "../utils/time";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const COLORS = ["#3b82f6", "#f97316", "#10b981", "#eab308", "#8b5cf6"];
+const COLORS = [
+    "#3b82f6", "#f97316", "#10b981", "#eab308", "#8b5cf6",
+    "#ef4444", "#84cc16", "#06b6d4", "#d946ef", "#6366f1",
+    "#f59e0b", "#22c55e", "#0ea5e9", "#a855f7", "#ec4899"
+];
 
 const METRICS = [
     { key: "hum" as MetricKey, label: "Humidity" },
@@ -62,6 +66,15 @@ const HistoricalChart: React.FC = () => {
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
+    const [colorMap, setColorMap] = useState<Record<string, string>>(() => {
+        try {
+            const storedColorMap = localStorage.getItem('deviceColorMap');
+            return storedColorMap ? JSON.parse(storedColorMap) : {};
+        } catch (e) {
+            console.error("Failed to parse colorMap from localStorage", e);
+            return {};
+        }
+    });
 
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +124,37 @@ const HistoricalChart: React.FC = () => {
 
         return result;
     }, [data]);
+
+    useEffect(() => {
+        const availableDevices = Object.keys(groupedData);
+        if (availableDevices.length === 0) return;
+
+        setColorMap(prev => {
+            const newColorMap = { ...prev };
+            let updated = false;
+
+            availableDevices.forEach((device) => {
+                if (!newColorMap[device]) {
+                    const usedColors = Object.values(newColorMap);
+                    const availableColors = COLORS.filter(c => !usedColors.includes(c));
+                    const color = availableColors.length > 0
+                        ? availableColors[0]
+                        : COLORS[Math.floor(Math.random() * COLORS.length)];
+                    newColorMap[device] = color;
+                    updated = true;
+                }
+            });
+
+            return updated ? newColorMap : prev;
+        });
+    }, [groupedData]);
+    useEffect(() => {
+        try {
+            localStorage.setItem('deviceColorMap', JSON.stringify(colorMap));
+        } catch (e) {
+            console.error("Failed to save colorMap to localStorage", e);
+        }
+    }, [colorMap]);
 
     useEffect(() => {
         const availableDevices = Object.keys(groupedData);
@@ -240,7 +284,7 @@ const HistoricalChart: React.FC = () => {
                         lineChartConfig={{
                             showLegend: chartConfig.showLegend,
                             showAxisLabels: chartConfig.showAxisLabels,
-                            autoScaleY: chartConfig.autoScaleY ?? false, 
+                            autoScaleY: chartConfig.autoScaleY ?? false,
                             extrapolation: {
                                 enabled: chartConfig.enableExtrapolation || false,
                                 method: chartConfig.forecastMethod || 'linear',
@@ -312,11 +356,6 @@ const HistoricalChart: React.FC = () => {
 
     if (isError) return <QueryError error={error} refetch={refetch} />;
 
-    const colorMap: Record<string, string> = Object.keys(groupedData).reduce((acc, device, index) => ({
-        ...acc,
-        [device]: COLORS[index % COLORS.length],
-    }), {});
-
     return (
         <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded shadow-lg">
             {/* View Mode Toggle */}
@@ -363,7 +402,7 @@ const HistoricalChart: React.FC = () => {
                 onDevicesChange={setSelectedDevices}
                 mappings={mappings}
                 colorMap={colorMap}
-                viewMode={viewMode} 
+                viewMode={viewMode}
             />
 
             {isLoading && (
