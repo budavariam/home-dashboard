@@ -7,7 +7,7 @@ export interface SensorReading {
         pow?: number;  // power
         tmp?: number;  // temperature
     };
-    ts: number | string;  // timestamp
+    ts: string;  // timestamp in ISO format (e.g., "2025-12-16T12:07:17Z")
 }
 
 export const DEFAULT_VALUE: SensorReading = Object.freeze({
@@ -19,7 +19,7 @@ export const DEFAULT_VALUE: SensorReading = Object.freeze({
         pow: 0,
         tmp: 0,
     },
-    ts: 0
+    ts: "1970-01-01T00:00:00.000Z"
 })
 
 export interface ApiParams {
@@ -31,7 +31,7 @@ export interface ApiResponse {
     val: {
         readings: SensorReading[];
     };
-    ts?: number;
+    ts: number;  // root timestamp in milliseconds since epoch
 }
 
 export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w" | "1m";
