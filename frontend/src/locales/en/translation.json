@@ -1,0 +1,13 @@
+{
+  "MAIN": {
+    "HEADER": {
+      "SUBMIT": "Submit"
+    }
+  },
+  "NAV": {
+    "DASHBOARD": "Dashboard",
+    "HISTORY": "History",
+    "HOME": "Home",
+    "MOCK": "Mock"
+  }
+}
