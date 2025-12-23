@@ -1,9 +1,11 @@
 import { Outlet, NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSensorParams } from './components/context/ParamContext';
 import { useMockData } from './components/context/MockDataContext';
 import { Footer } from './components/Footer';
 
 export const App = () => {
+    const { t } = useTranslation();
     const { token, apiParams } = useSensorParams();
     const { useMock } = useMockData();
     const isAuthenticated = useMock || (token && apiParams.user && apiParams.bucket);
@@ -19,7 +21,7 @@ export const App = () => {
                                 isActive ? 'text-blue-400' : 'hover:text-blue-400'
                             }
                         >
-                            Home
+                            {t('NAV.HOME')}
                         </NavLink>
                     </li>
                     {isAuthenticated && (
@@ -31,7 +33,7 @@ export const App = () => {
                                         isActive ? 'text-blue-400' : 'hover:text-blue-400'
                                     }
                                 >
-                                    Dashboard
+                                    {t('NAV.DASHBOARD')}
                                 </NavLink>
                             </li>
                             <li>
@@ -41,7 +43,7 @@ export const App = () => {
                                         isActive ? 'text-blue-400' : 'hover:text-blue-400'
                                     }
                                 >
-                                    History
+                                    {t('NAV.HISTORY')}
                                 </NavLink>
                             </li>
                         </>
@@ -53,7 +55,7 @@ export const App = () => {
                                 isActive ? 'text-blue-400' : 'hover:text-blue-400'
                             }
                         >
-                            Mock
+                            {t('NAV.MOCK')}
                         </NavLink>
                     </li>
                 </ul>
