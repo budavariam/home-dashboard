@@ -1,0 +1,13 @@
+{
+  "MAIN": {
+    "HEADER": {
+      "SUBMIT": "Küldés"
+    }
+  },
+  "NAV": {
+    "DASHBOARD": "Irányítópult",
+    "HISTORY": "Előzmények",
+    "HOME": "Főoldal",
+    "MOCK": "Mock"
+  }
+}
