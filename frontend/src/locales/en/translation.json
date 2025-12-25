@@ -1,7 +1,39 @@
 {
-  "MAIN": {
-    "HEADER": {
-      "SUBMIT": "Submit"
+  "LANDING": {
+    "DESCRIPTION": {
+      "LINE1": "I use this page to view historical and current readings from BLE sensors across my home.",
+      "LINE2": "I collect these data with an ESP32 device.",
+      "LINE3": "I use sensors like",
+      "LINE4": "I store the date into",
+      "SENSOR_NAME": "Xiaomi Mi Temperature and Humidity Monitor 2",
+      "THINGER_BUCKET": "Thinger.io data buckets"
+    },
+    "MOCK_INFO": {
+      "MOCK_LINK": "mock",
+      "TEXT1": "If you don't own a data bucket, you can try out this app with the",
+      "TEXT2": "menu",
+      "TEXT3": "and see how it would look without needing a",
+      "TEXT4": "account.",
+      "THINGER_LINK": "Thinger.io"
+    },
+    "SHAREABLE_URL": "Shareable URL:",
+    "TITLE": "BLE Sensor Dashboard",
+    "TRY_APP": {
+      "BUCKET_LABEL": "Bucket",
+      "BUCKET_PLACEHOLDER": "Enter your bucket",
+      "COPIED": "Copied!",
+      "COPY_URL": "Copy URL",
+      "HIDE": "Hide",
+      "MAPPINGS_LABEL": "Mappings",
+      "MAPPINGS_PLACEHOLDER": "Enter sensor mappings (e.g., Sensor_0:Room1;Sensor_1:Room2)",
+      "SHOW": "Show",
+      "SUBTITLE": "You can try out the app by entering the following parameters:",
+      "TITLE": "Try the App With Your Data",
+      "TOKEN_LABEL": "Token",
+      "TOKEN_PLACEHOLDER": "Enter your token",
+      "UPDATE_DATA": "Update Data",
+      "USER_LABEL": "User",
+      "USER_PLACEHOLDER": "Enter your user"
     }
   },
   "NAV": {
