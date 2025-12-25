@@ -1,4 +1,14 @@
 {
+  "DASHBOARD": {
+    "BATTERY": "Töltöttség",
+    "FETCHING": "Adatok lekérése...",
+    "HUMIDITY": "Páratartalom",
+    "LAST_UPDATED": "Utoljára frissítve:",
+    "POWER": "Tápfeszültség",
+    "REFRESH": "Frissítés most",
+    "TEMPERATURE": "Hőmérséklet",
+    "TITLE": "Szenzor irányítópult"
+  },
   "FOOTER": {
     "COMPONENT_DOCS": "Komponens dokumentáció",
     "COPYRIGHT": "Minden jog fenntartva.",
