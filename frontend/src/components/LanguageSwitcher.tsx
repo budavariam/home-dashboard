@@ -1,4 +1,3 @@
-
 import { useTranslation } from 'react-i18next';
 
 export const LanguageSwitcher = () => {
@@ -12,7 +11,7 @@ export const LanguageSwitcher = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 transition-all text-2xl"
+      className="px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 transition-all leading-none"
       title={i18n.language === 'en' ? 'Switch to Magyar' : 'Switch to English'}
       aria-label={i18n.language === 'en' ? 'Switch to Magyar' : 'Switch to English'}
     >
