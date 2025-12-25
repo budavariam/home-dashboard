@@ -1,4 +1,11 @@
 {
+  "FOOTER": {
+    "COMPONENT_DOCS": "Component Docs",
+    "COPYRIGHT": "All Rights Reserved.",
+    "DEVELOPED_BY": "Developed by",
+    "GITHUB": "GitHub",
+    "SOURCE_CODE": "Source code available on"
+  },
   "LANDING": {
     "DESCRIPTION": {
       "LINE1": "I use this page to view historical and current readings from BLE sensors across my home.",
@@ -35,6 +42,17 @@
       "USER_LABEL": "User",
       "USER_PLACEHOLDER": "Enter your user"
     }
+  },
+  "MOCK": {
+    "ERROR_MESSAGE": "Invalid JSON format.",
+    "PLACEHOLDER": "Paste JSON data here...",
+    "SAVE_MOCK_DATA": "Save Mock Data",
+    "SUCCESS_MESSAGE": "Mock data saved successfully!",
+    "TITLE": "Sensor Data",
+    "USE_EXAMPLE_DATA": "Use Example Data",
+    "USE_MOCK_DATA": "Use Mock Data",
+    "VIEW_CURRENT": "View Current Mock Data",
+    "VIEW_EXAMPLE": "View Example Mock Data"
   },
   "NAV": {
     "DASHBOARD": "Dashboard",
