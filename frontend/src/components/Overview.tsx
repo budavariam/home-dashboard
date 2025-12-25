@@ -1,5 +1,6 @@
 import { SensorReading } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { useTranslation } from 'react-i18next';
 
 interface OverviewProps {
   isFetching: boolean;
@@ -12,14 +13,14 @@ const getTemperatureColor = (temp?: number) => {
   if (!temp) return 'bg-gray-100 dark:bg-gray-800';
   if (temp < 18) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
   if (temp > 25) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
-  return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'; // Comfortable range 18-25°C
+  return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
 const getHumidityColor = (humidity?: number) => {
   if (!humidity) return 'bg-gray-100 dark:bg-gray-800';
   if (humidity < 30) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
   if (humidity > 60) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
-  return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'; // Comfortable range 30-60%
+  return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
 const getBatteryColor = (battery?: number) => {
@@ -29,31 +30,41 @@ const getBatteryColor = (battery?: number) => {
   return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
-const StatBox = ({ label, value, unit, colorClass }: {
+const StatBox = ({
+  label,
+  value,
+  unit,
+  colorClass,
+}: {
   label: string;
   value: string | number;
   unit: string;
   colorClass: string;
 }) => (
   <div className={`p-4 rounded-lg ${colorClass}`}>
-    <div className="text-3xl font-bold mb-1 dark:text-gray-50 dark:font-semibold">{value}{unit}</div>
-    <div className="text-sm opacity-70 dark:opacity-50 dark:text-gray-50 dark:font-semibold">{label}</div>
+    <div className="text-3xl font-bold mb-1 dark:text-gray-50 dark:font-semibold">
+      {value}
+      {unit}
+    </div>
+    <div className="text-sm opacity-70 dark:opacity-50 dark:text-gray-50 dark:font-semibold">
+      {label}
+    </div>
   </div>
 );
 
 const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
+  const { t } = useTranslation();
+
   return (
     <div className="p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Sensor Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t('DASHBOARD.TITLE')}</h1>
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors disabled:opacity-60"
         >
-          {isFetching ? (
-            "Fetching data..."
-          ) : "Refresh Now"}
+          {isFetching ? t('DASHBOARD.FETCHING') : t('DASHBOARD.REFRESH')}
         </button>
       </div>
 
@@ -71,32 +82,32 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <StatBox
-                    label="Temperature"
-                    value={sensor.r?.tmp?.toFixed(1) ?? "?"}
+                    label={t('DASHBOARD.TEMPERATURE')}
+                    value={sensor.r?.tmp?.toFixed(1) ?? '?'}
                     unit="°C"
                     colorClass={getTemperatureColor(sensor.r?.tmp)}
                   />
                   <StatBox
-                    label="Humidity"
-                    value={sensor.r?.hum?.toFixed(1) ?? "?"}
+                    label={t('DASHBOARD.HUMIDITY')}
+                    value={sensor.r?.hum?.toFixed(1) ?? '?'}
                     unit="%"
                     colorClass={getHumidityColor(sensor.r?.hum)}
                   />
                   <StatBox
-                    label="Battery"
-                    value={sensor.r?.bat ?? "?"}
+                    label={t('DASHBOARD.BATTERY')}
+                    value={sensor.r?.bat ?? '?'}
                     unit="%"
                     colorClass={getBatteryColor(sensor.r?.bat)}
                   />
                   <StatBox
-                    label="Power"
-                    value={sensor.r?.pow?.toFixed(3) ?? "?"}
+                    label={t('DASHBOARD.POWER')}
+                    value={sensor.r?.pow?.toFixed(3) ?? '?'}
                     unit="V"
                     colorClass="bg-gray-100 dark:bg-gray-800"
                   />
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                  Last updated: {formattedTime}
+                  {t('DASHBOARD.LAST_UPDATED')} {formattedTime}
                 </div>
               </CardContent>
             </Card>
