@@ -1,4 +1,14 @@
 {
+  "DASHBOARD": {
+    "BATTERY": "Battery",
+    "FETCHING": "Fetching data...",
+    "HUMIDITY": "Humidity",
+    "LAST_UPDATED": "Last updated:",
+    "POWER": "Power",
+    "REFRESH": "Refresh Now",
+    "TEMPERATURE": "Temperature",
+    "TITLE": "Sensor Dashboard"
+  },
   "FOOTER": {
     "COMPONENT_DOCS": "Component Docs",
     "COPYRIGHT": "All Rights Reserved.",
