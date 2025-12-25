@@ -1,4 +1,11 @@
 {
+  "FOOTER": {
+    "COMPONENT_DOCS": "Komponens dokumentáció",
+    "COPYRIGHT": "Minden jog fenntartva.",
+    "DEVELOPED_BY": "Fejlesztette",
+    "GITHUB": "GitHub",
+    "SOURCE_CODE": "Forráskód elérhető"
+  },
   "LANDING": {
     "DESCRIPTION": {
       "LINE1": "Ezt az oldalt használom az otthonomban található BLE szenzorok történeti és aktuális értékeinek megtekintésére.",
@@ -35,6 +42,17 @@
       "USER_LABEL": "Felhasználó",
       "USER_PLACEHOLDER": "Adja meg a felhasználót"
     }
+  },
+  "MOCK": {
+    "ERROR_MESSAGE": "Érvénytelen JSON formátum.",
+    "PLACEHOLDER": "Illessze be a JSON adatokat ide...",
+    "SAVE_MOCK_DATA": "Mock adatok mentése",
+    "SUCCESS_MESSAGE": "Mock adatok sikeresen mentve!",
+    "TITLE": "Szenzor adatok",
+    "USE_EXAMPLE_DATA": "Példa adatok használata",
+    "USE_MOCK_DATA": "Mock adatok használata",
+    "VIEW_CURRENT": "Jelenlegi mock adatok megtekintése",
+    "VIEW_EXAMPLE": "Példa mock adatok megtekintése"
   },
   "NAV": {
     "DASHBOARD": "Irányítópult",
