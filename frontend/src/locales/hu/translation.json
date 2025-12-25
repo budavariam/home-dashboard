@@ -1,7 +1,39 @@
 {
-  "MAIN": {
-    "HEADER": {
-      "SUBMIT": "Küldés"
+  "LANDING": {
+    "DESCRIPTION": {
+      "LINE1": "Ezt az oldalt használom az otthonomban található BLE szenzorok történeti és aktuális értékeinek megtekintésére.",
+      "LINE2": "Az adatokat egy ESP32 eszközzel gyűjtöm.",
+      "LINE3": "Olyan szenzorokat használok, mint a",
+      "LINE4": "Az adatokat a következőbe tárolom:",
+      "SENSOR_NAME": "Xiaomi Mi Hőmérséklet és Páratartalom Mérő 2",
+      "THINGER_BUCKET": "Thinger.io adattárolók"
+    },
+    "MOCK_INFO": {
+      "MOCK_LINK": "mock",
+      "TEXT1": "Ha nincs saját adattárolója, kipróbálhatja az alkalmazást a",
+      "TEXT2": "menüvel",
+      "TEXT3": "és megnézheti, hogyan nézne ki anélkül, hogy szüksége lenne",
+      "TEXT4": "fiókra.",
+      "THINGER_LINK": "Thinger.io"
+    },
+    "SHAREABLE_URL": "Megosztható URL:",
+    "TITLE": "BLE Szenzor Irányítópult",
+    "TRY_APP": {
+      "BUCKET_LABEL": "Tároló",
+      "BUCKET_PLACEHOLDER": "Adja meg a tárolót",
+      "COPIED": "Másolva!",
+      "COPY_URL": "URL másolása",
+      "HIDE": "Elrejt",
+      "MAPPINGS_LABEL": "Leképezések",
+      "MAPPINGS_PLACEHOLDER": "Adja meg a szenzor leképezéseket (pl. Sensor_0:Szoba1;Sensor_1:Szoba2)",
+      "SHOW": "Mutat",
+      "SUBTITLE": "Kipróbálhatja az alkalmazást a következő paraméterek megadásával:",
+      "TITLE": "Próbálja ki az alkalmazást a saját adataival",
+      "TOKEN_LABEL": "Token",
+      "TOKEN_PLACEHOLDER": "Adja meg a tokent",
+      "UPDATE_DATA": "Adatok frissítése",
+      "USER_LABEL": "Felhasználó",
+      "USER_PLACEHOLDER": "Adja meg a felhasználót"
     }
   },
   "NAV": {
