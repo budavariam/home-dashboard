@@ -13,9 +13,9 @@ export const App = () => {
 
     return (
         <div className="min-h-screen">
-            <nav className="bg-gray-800 text-white p-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                    <ul className="flex gap-4 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-2 sm:pb-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+            <nav className="bg-gray-800 text-white p-4 overflow-x-auto overflow-y-hidden">
+                <div className="flex items-center gap-4 min-w-max">
+                    <ul className="flex gap-4">
                         <li className="flex-shrink-0">
                             <NavLink
                                 to="."
@@ -61,7 +61,7 @@ export const App = () => {
                             </NavLink>
                         </li>
                     </ul>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 ml-auto">
                         <LanguageSwitcher />
                     </div>
                 </div>
