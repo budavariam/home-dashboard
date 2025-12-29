@@ -36,7 +36,7 @@ export interface ApiResponse {
 
 export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w" | "1m";
 export type MetricKey = "hum" | "tmp" | "bat";
-export type MetricLabel = "Humidity" | "Temperature" | "Battery";
+export type MetricLabel = string;
 
 export interface MetricConfig {
     key: MetricKey;
