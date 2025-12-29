@@ -21,7 +21,7 @@
       "LINE1": "I use this page to view historical and current readings from BLE sensors across my home.",
       "LINE2": "I collect these data with an ESP32 device.",
       "LINE3": "I use sensors like",
-      "LINE4": "I store the date into",
+      "LINE4": "I store the data into",
       "SENSOR_NAME": "Xiaomi Mi Temperature and Humidity Monitor 2",
       "THINGER_BUCKET": "Thinger.io data buckets"
     },
