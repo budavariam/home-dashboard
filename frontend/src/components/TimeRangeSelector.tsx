@@ -1,16 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { TimeRange } from '../types';
-
-const TIME_RANGES = [
-    { value: "1h", label: "Last 1 Hour" },
-    { value: "6h", label: "Last 6 Hours" },
-    { value: "12h", label: "Last 12 Hours" },
-    { value: "24h", label: "Last 24 Hours" },
-    { value: "48h", label: "Last 2 Days" },
-    { value: "1w", label: "Last Week" },
-    { value: "2w", label: "Past 2 Weeks" },
-    { value: "1m", label: "Last Month" },
-] as const;
 
 interface TimeRangeSelectorProps {
     value: TimeRange;
@@ -23,6 +13,19 @@ export const TimeRangeSelector: React.FC<TimeRangeSelectorProps> = ({
     onChange,
     className = ""
 }) => {
+    const { t } = useTranslation();
+
+    const TIME_RANGES = [
+        { value: "1h", label: t('TIME_RANGE.LAST_1_HOUR') },
+        { value: "6h", label: t('TIME_RANGE.LAST_6_HOURS') },
+        { value: "12h", label: t('TIME_RANGE.LAST_12_HOURS') },
+        { value: "24h", label: t('TIME_RANGE.LAST_24_HOURS') },
+        { value: "48h", label: t('TIME_RANGE.LAST_2_DAYS') },
+        { value: "1w", label: t('TIME_RANGE.LAST_WEEK') },
+        { value: "2w", label: t('TIME_RANGE.PAST_2_WEEKS') },
+        { value: "1m", label: t('TIME_RANGE.LAST_MONTH') },
+    ] as const;
+
     return (
         <select
             className={`border rounded p-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 ${className}`}

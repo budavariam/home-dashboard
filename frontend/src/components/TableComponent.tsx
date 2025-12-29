@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricKey, GroupedData } from '../types';
 import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
 
@@ -32,6 +33,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     splitView = true,
     compareLastPeriod = false,
 }) => {
+    const { t } = useTranslation();
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
 
     // Determine active metrics for display
@@ -166,9 +168,9 @@ export const TableComponent: React.FC<TableComponentProps> = ({
 
     const getMetricLabel = (metric: MetricKey): string => {
         switch (metric) {
-            case 'hum': return 'Humidity (%)';
-            case 'tmp': return 'Temperature (°C)';
-            case 'bat': return 'Battery (%)';
+            case 'hum': return t('METRICS.HUMIDITY_UNIT');
+            case 'tmp': return t('METRICS.TEMPERATURE_UNIT');
+            case 'bat': return t('METRICS.BATTERY_UNIT');
             default: return metric;
         }
     };
@@ -212,7 +214,22 @@ export const TableComponent: React.FC<TableComponentProps> = ({
 
     const getTitle = (): string => {
         const metricLabels = activeMetrics.map(m => getMetricLabel(m)).join(', ');
-        return metricLabels ? `${metricLabels} Data Table` : 'Data Table';
+        return metricLabels ? `${metricLabels} ${t('TABLE.TITLE')}` : t('TABLE.TITLE');
+    };
+
+    const getStatLabel = (statType: string): string => {
+        switch (statType) {
+            case 'min':
+                return t('TABLE.STATS.MIN');
+            case 'avg':
+                return t('TABLE.STATS.AVG');
+            case 'median':
+                return t('TABLE.STATS.MEDIAN');
+            case 'max':
+                return t('TABLE.STATS.MAX');
+            default:
+                return statType;
+        }
     };
 
     const handleSort = (key: 'timestamp' | string) => {
@@ -274,7 +291,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     if (devices.length === 0 || uniqueTimestamps.length === 0) {
         return (
             <div className={`text-center text-gray-500 p-8 ${className}`}>
-                No data available for table
+                {t('TABLE.NO_DATA')}
             </div>
         );
     }
@@ -282,7 +299,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     if (activeMetrics.length === 0) {
         return (
             <div className={`text-center text-gray-500 p-8 ${className}`}>
-                No metrics selected
+                {t('TABLE.NO_METRICS')}
             </div>
         );
     }
@@ -297,7 +314,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                 </h3>
                 {hasExtrapolation && (
                     <span className="text-xs text-blue-600 dark:text-blue-400 italic">
-                        {originalLength} actual + {uniqueTimestamps.length - originalLength} forecast rows
+                        {originalLength} {t('TABLE.ACTUAL')} + {uniqueTimestamps.length - originalLength} {t('TABLE.FORECAST_ROWS')}
                     </span>
                 )}
             </div>
@@ -310,7 +327,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                 className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                 onClick={() => handleSort('timestamp')}
                             >
-                                Timestamp
+                                {t('TABLE.TIMESTAMP')}
                                 <SortIndicator columnKey="timestamp" />
                             </th>
                             {devices.map((device) => (
@@ -326,7 +343,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                         <th
                                             className="px-4 py-3 text-left text-sm font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 whitespace-nowrap"
                                         >
-                                            {mappings[device] || device} (Prev)
+                                            {mappings[device] || device} {t('TABLE.PREVIOUS')}
                                         </th>
                                     )}
                                 </React.Fragment>
@@ -397,7 +414,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                         {['min', 'avg', 'median', 'max'].map((statType) => (
                             <tr key={statType} className="border-t-2 border-gray-300 dark:border-gray-600">
                                 <td className="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                                    {statType.charAt(0).toUpperCase() + statType.slice(1)}
+                                    {getStatLabel(statType)}
                                 </td>
                                 {devices.map((device) => {
                                     const displayValue = formatCombinedStats(device, statType as 'avg' | 'median' | 'min' | 'max');

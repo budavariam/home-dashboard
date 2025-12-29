@@ -69,5 +69,93 @@
     "HISTORY": "Előzmények",
     "HOME": "Főoldal",
     "MOCK": "Mock"
+  },
+  "LANGUAGE_SWITCHER": {
+    "SWITCH_TO_HUNGARIAN": "Váltás magyarra",
+    "SWITCH_TO_ENGLISH": "Váltás angolra"
+  },
+  "ERROR": {
+    "TITLE": "Hiba: ",
+    "FETCH_FAILED": "Hiba történt az adatok lekérése során.",
+    "TRY_AGAIN": "Próbálja újra"
+  },
+  "METRICS": {
+    "HUMIDITY": "Páratartalom",
+    "TEMPERATURE": "Hőmérséklet",
+    "BATTERY": "Töltöttség",
+    "HUMIDITY_UNIT": "Páratartalom (%)",
+    "TEMPERATURE_UNIT": "Hőmérséklet (°C)",
+    "BATTERY_UNIT": "Töltöttség (%)"
+  },
+  "HISTORY": {
+    "VIEW_MODE": "Nézet mód:",
+    "LINE_CHART": "Vonaldiagram",
+    "HEATMAP": "Hőtérkép",
+    "TABLE": "Táblázat",
+    "LOADING": "Adatok betöltése...",
+    "HEATMAP_NO_COMBINED": "A hőtérkép nem támogatja a kombinált diagram módot. Kérjük, engedélyezze a \"Diagramok szétválasztása\" opciót a beállításokban."
+  },
+  "DEVICE_SELECTOR": {
+    "TITLE": "Eszközök",
+    "SELECT_ALL": "Összes kijelölése",
+    "DESELECT_ALL": "Kijelölés megszüntetése"
+  },
+  "TIME_RANGE": {
+    "LAST_1_HOUR": "Utolsó 1 óra",
+    "LAST_6_HOURS": "Utolsó 6 óra",
+    "LAST_12_HOURS": "Utolsó 12 óra",
+    "LAST_24_HOURS": "Utolsó 24 óra",
+    "LAST_2_DAYS": "Utolsó 2 nap",
+    "LAST_WEEK": "Utolsó hét",
+    "PAST_2_WEEKS": "Elmúlt 2 hét",
+    "LAST_MONTH": "Utolsó hónap"
+  },
+  "CHART_CONFIG": {
+    "SPLIT_CHARTS": "Diagramok szétválasztása",
+    "ENABLE_FORECAST": "Előrejelzés engedélyezése",
+    "OPTIONS": "Beállítások",
+    "METHOD": "Módszer:",
+    "METHOD_LINEAR": "Lineáris",
+    "METHOD_EXPONENTIAL": "Exponenciális",
+    "METHOD_MOVING_AVERAGE": "Mozgó átlag",
+    "POINTS": "Pontok:",
+    "POINTS_TOOLTIP": "Előrejelzendő pontok száma",
+    "WINDOW_SIZE": "Ablak mérete:",
+    "WINDOW_SIZE_TOOLTIP": "Az előrejelzéshez használt történeti pontok száma",
+    "COMPARE_LAST_PERIOD": "Előző időszak összehasonlítása"
+  },
+  "TABLE": {
+    "TITLE": "Adattáblázat",
+    "NO_DATA": "Nincs elérhető adat a táblázathoz",
+    "NO_METRICS": "Nincs kiválasztott metrika",
+    "TIMESTAMP": "Időbélyeg",
+    "PREVIOUS": "(Előző)",
+    "ACTUAL": "tényleges",
+    "FORECAST_ROWS": "előrejelzett sorok",
+    "STATS": {
+      "MIN": "Min",
+      "AVG": "Átlag",
+      "MEDIAN": "Medián",
+      "MAX": "Max"
+    }
+  },
+  "HEATMAP": {
+    "TITLE": "Hőtérkép",
+    "NO_DATA": "Nincs elérhető adat a hőtérképhez",
+    "LOW": "Alacsony",
+    "HIGH": "Magas",
+    "VALUE": "Érték: "
+  },
+  "LINE_CHART": {
+    "WITH_FORECAST": " előrejelzéssel",
+    "HISTORICAL_READINGS": "Történeti eszköz adatok",
+    "FORECAST": "(Előrejelzés)",
+    "PREVIOUS": "(Előző)",
+    "LEGEND": "Jelmagyarázat",
+    "AXIS": "Tengely",
+    "AUTO_SCALE": "Automatikus skálázás",
+    "SHOWING": "Megjelenítés",
+    "ACTUAL": "tényleges",
+    "FORECAST_POINTS": "előrejelzett pontok"
   }
 }

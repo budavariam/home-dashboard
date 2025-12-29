@@ -69,5 +69,93 @@
     "HISTORY": "History",
     "HOME": "Home",
     "MOCK": "Mock"
+  },
+  "LANGUAGE_SWITCHER": {
+    "SWITCH_TO_HUNGARIAN": "Switch to Magyar",
+    "SWITCH_TO_ENGLISH": "Switch to English"
+  },
+  "ERROR": {
+    "TITLE": "Error: ",
+    "FETCH_FAILED": "Something went wrong while fetching the data.",
+    "TRY_AGAIN": "Try Again"
+  },
+  "METRICS": {
+    "HUMIDITY": "Humidity",
+    "TEMPERATURE": "Temperature",
+    "BATTERY": "Battery",
+    "HUMIDITY_UNIT": "Humidity (%)",
+    "TEMPERATURE_UNIT": "Temperature (°C)",
+    "BATTERY_UNIT": "Battery (%)"
+  },
+  "HISTORY": {
+    "VIEW_MODE": "View Mode:",
+    "LINE_CHART": "Line Chart",
+    "HEATMAP": "Heatmap",
+    "TABLE": "Table",
+    "LOADING": "Loading data...",
+    "HEATMAP_NO_COMBINED": "Heatmap does not support combined chart mode. Please enable \"Split Charts\" in settings."
+  },
+  "DEVICE_SELECTOR": {
+    "TITLE": "Devices",
+    "SELECT_ALL": "Select All",
+    "DESELECT_ALL": "Deselect All"
+  },
+  "TIME_RANGE": {
+    "LAST_1_HOUR": "Last 1 Hour",
+    "LAST_6_HOURS": "Last 6 Hours",
+    "LAST_12_HOURS": "Last 12 Hours",
+    "LAST_24_HOURS": "Last 24 Hours",
+    "LAST_2_DAYS": "Last 2 Days",
+    "LAST_WEEK": "Last Week",
+    "PAST_2_WEEKS": "Past 2 Weeks",
+    "LAST_MONTH": "Last Month"
+  },
+  "CHART_CONFIG": {
+    "SPLIT_CHARTS": "Split Charts",
+    "ENABLE_FORECAST": "Enable Forecast",
+    "OPTIONS": "Options",
+    "METHOD": "Method:",
+    "METHOD_LINEAR": "Linear",
+    "METHOD_EXPONENTIAL": "Exponential",
+    "METHOD_MOVING_AVERAGE": "Moving Average",
+    "POINTS": "Points:",
+    "POINTS_TOOLTIP": "Number of points to forecast",
+    "WINDOW_SIZE": "Window Size:",
+    "WINDOW_SIZE_TOOLTIP": "Number of historical points to use for forecasting",
+    "COMPARE_LAST_PERIOD": "Compare last period"
+  },
+  "TABLE": {
+    "TITLE": "Data Table",
+    "NO_DATA": "No data available for table",
+    "NO_METRICS": "No metrics selected",
+    "TIMESTAMP": "Timestamp",
+    "PREVIOUS": "(Prev)",
+    "ACTUAL": "actual",
+    "FORECAST_ROWS": "forecast rows",
+    "STATS": {
+      "MIN": "Min",
+      "AVG": "Avg",
+      "MEDIAN": "Median",
+      "MAX": "Max"
+    }
+  },
+  "HEATMAP": {
+    "TITLE": "Heatmap",
+    "NO_DATA": "No data available for heatmap",
+    "LOW": "Low",
+    "HIGH": "High",
+    "VALUE": "Value: "
+  },
+  "LINE_CHART": {
+    "WITH_FORECAST": " with Forecast",
+    "HISTORICAL_READINGS": "Historical Device Readings",
+    "FORECAST": "(Forecast)",
+    "PREVIOUS": "(Prev)",
+    "LEGEND": "Legend",
+    "AXIS": "Axis",
+    "AUTO_SCALE": "Auto-scale",
+    "SHOWING": "Showing",
+    "ACTUAL": "actual",
+    "FORECAST_POINTS": "forecast points"
   }
 }

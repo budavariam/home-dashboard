@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -27,12 +28,6 @@ const COLORS = [
     "#f59e0b", "#22c55e", "#0ea5e9", "#a855f7", "#ec4899"
 ];
 
-const METRICS = [
-    { key: "hum" as MetricKey, label: "Humidity" },
-    { key: "tmp" as MetricKey, label: "Temperature", borderDash: [5, 5] },
-    { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
-];
-
 type ViewMode = 'line' | 'heatmap' | 'table';
 
 interface RenderViewProps {
@@ -47,6 +42,14 @@ interface RenderViewProps {
 }
 
 const HistoricalChart: React.FC = () => {
+    const { t } = useTranslation();
+
+    const METRICS = [
+        { key: "hum" as MetricKey, label: t('METRICS.HUMIDITY') },
+        { key: "tmp" as MetricKey, label: t('METRICS.TEMPERATURE'), borderDash: [5, 5] },
+        { key: "bat" as MetricKey, label: t('METRICS.BATTERY'), borderDash: [2, 2] },
+    ];
+
     const [timeRange, setTimeRange] = useState<TimeRange>("6h");
     const [selectedMetrics, setSelectedMetrics] = useState<Record<MetricKey, boolean>>({
         hum: true,
@@ -322,7 +325,7 @@ const HistoricalChart: React.FC = () => {
             case 'heatmap':
                 return (
                     <div className="text-center text-gray-500 p-8">
-                        Heatmap does not support combined chart mode. Please enable "Split Charts" in settings.
+                        {t('HISTORY.HEATMAP_NO_COMBINED')}
                     </div>
                 );
 
@@ -377,7 +380,7 @@ const HistoricalChart: React.FC = () => {
         <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded shadow-lg">
             {/* View Mode Toggle */}
             <div className="mb-4 flex gap-2 items-center flex-wrap">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">View Mode:</span>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">{t('HISTORY.VIEW_MODE')}</span>
                 <button
                     onClick={() => setViewMode('line')}
                     className={`px-3 py-1 rounded text-sm transition-colors ${viewMode === 'line'
@@ -385,7 +388,7 @@ const HistoricalChart: React.FC = () => {
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
                         }`}
                 >
-                    Line Chart
+                    {t('HISTORY.LINE_CHART')}
                 </button>
                 <button
                     onClick={() => setViewMode('heatmap')}
@@ -394,7 +397,7 @@ const HistoricalChart: React.FC = () => {
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
                         }`}
                 >
-                    Heatmap
+                    {t('HISTORY.HEATMAP')}
                 </button>
                 <button
                     onClick={() => setViewMode('table')}
@@ -403,7 +406,7 @@ const HistoricalChart: React.FC = () => {
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
                         }`}
                 >
-                    Table
+                    {t('HISTORY.TABLE')}
                 </button>
             </div>
 
@@ -424,7 +427,7 @@ const HistoricalChart: React.FC = () => {
 
             {isLoading && (
                 <div className="text-center text-gray-700 dark:text-gray-300 mb-2">
-                    Loading data...
+                    {t('HISTORY.LOADING')}
                 </div>
             )}
 

@@ -1,11 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricKey, MetricConfig } from '../types';
-
-const METRICS: MetricConfig[] = [
-    { key: "hum", label: "Humidity" },
-    { key: "tmp", label: "Temperature", borderDash: [5, 5] },
-    { key: "bat", label: "Battery", borderDash: [2, 2] },
-];
 
 interface MetricSelectorProps {
     selectedMetrics: Record<MetricKey, boolean>;
@@ -18,6 +13,14 @@ export const MetricSelector: React.FC<MetricSelectorProps> = ({
     onChange,
     className = ""
 }) => {
+    const { t } = useTranslation();
+
+    const METRICS: MetricConfig[] = [
+        { key: "hum", label: t('METRICS.HUMIDITY') },
+        { key: "tmp", label: t('METRICS.TEMPERATURE'), borderDash: [5, 5] },
+        { key: "bat", label: t('METRICS.BATTERY'), borderDash: [2, 2] },
+    ];
+
     return (
         <div className={`flex gap-2 items-center ${className}`}>
             {METRICS.map(({ key, label }) => (

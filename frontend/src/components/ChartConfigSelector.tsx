@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChartConfig } from '../types';
 
 interface ChartConfigSelectorProps {
@@ -14,6 +15,7 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
     className = "",
     viewMode = 'line'
 }) => {
+    const { t } = useTranslation();
     const showExtrapolation = viewMode === 'line' || viewMode === 'table';
 
     return (
@@ -27,7 +29,7 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                         splitCharts: e.target.checked,
                     })}
                 />
-                Split Charts
+                {t('CHART_CONFIG.SPLIT_CHARTS')}
             </label>
 
             {showExtrapolation && (
@@ -41,14 +43,14 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                                 enableExtrapolation: e.target.checked,
                             })}
                         />
-                        Enable Forecast
+                        {t('CHART_CONFIG.ENABLE_FORECAST')}
                     </label>
 
                     {config.enableExtrapolation && (
                         <details className="absolute top-full left-0 mt-1 z-50 group">
                             <summary className="cursor-pointer list-none">
                                 <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
-                                    <span>Options</span>
+                                    <span>{t('CHART_CONFIG.OPTIONS')}</span>
                                     <span className="group-open:rotate-180 transition-transform">▼</span>
                                 </div>
                             </summary>
@@ -56,7 +58,7 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                                 <div className="flex flex-col gap-3">
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <label className="text-sm text-gray-700 dark:text-gray-300 min-w-[100px] font-medium">
-                                            Method:
+                                            {t('CHART_CONFIG.METHOD')}
                                         </label>
                                         <select
                                             className="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
@@ -66,15 +68,15 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                                                 forecastMethod: e.target.value as 'linear' | 'exponential' | 'moving-average',
                                             })}
                                         >
-                                            <option value="linear">Linear</option>
-                                            <option value="exponential">Exponential</option>
-                                            <option value="moving-average">Moving Average</option>
+                                            <option value="linear">{t('CHART_CONFIG.METHOD_LINEAR')}</option>
+                                            <option value="exponential">{t('CHART_CONFIG.METHOD_EXPONENTIAL')}</option>
+                                            <option value="moving-average">{t('CHART_CONFIG.METHOD_MOVING_AVERAGE')}</option>
                                         </select>
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <label className="text-sm text-gray-700 dark:text-gray-300 min-w-[100px] font-medium">
-                                            Points:
+                                            {t('CHART_CONFIG.POINTS')}
                                         </label>
                                         <input
                                             type="number"
@@ -86,13 +88,13 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                                                 ...config,
                                                 forecastPoints: parseInt(e.target.value) || 5,
                                             })}
-                                            title="Number of points to forecast"
+                                            title={t('CHART_CONFIG.POINTS_TOOLTIP')}
                                         />
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <label className="text-sm text-gray-700 dark:text-gray-300 min-w-[100px] font-medium">
-                                            Window Size:
+                                            {t('CHART_CONFIG.WINDOW_SIZE')}
                                         </label>
                                         <input
                                             type="number"
@@ -104,7 +106,7 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                                                 ...config,
                                                 forecastWindowSize: parseInt(e.target.value) || 10,
                                             })}
-                                            title="Number of historical points to use for forecasting"
+                                            title={t('CHART_CONFIG.WINDOW_SIZE_TOOLTIP')}
                                         />
                                     </div>
                                 </div>
@@ -123,7 +125,7 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                             compareLastPeriod: e.target.checked,
                         })}
                     />
-                    Compare last period
+                    {t('CHART_CONFIG.COMPARE_LAST_PERIOD')}
                 </label>
             )}
         </div>

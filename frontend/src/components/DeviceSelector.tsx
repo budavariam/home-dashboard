@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DeviceSelectorProps {
     devices: string[];
@@ -17,6 +18,7 @@ export const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     colorMap,
     className = ""
 }) => {
+    const { t } = useTranslation();
     const handleSelectAll = () => onChange(devices);
     const handleDeselectAll = () => onChange([]);
 
@@ -32,19 +34,19 @@ export const DeviceSelector: React.FC<DeviceSelectorProps> = ({
         <div className={`border-t border-gray-300 dark:border-gray-600 pt-4 ${className}`}>
             <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Devices</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{t('DEVICE_SELECTOR.TITLE')}</span>
                     <span>
                         <button
                             onClick={handleSelectAll}
                             className="text-sm text-blue-600 dark:text-blue-400 hover:underline mr-2"
                         >
-                            Select All
+                            {t('DEVICE_SELECTOR.SELECT_ALL')}
                         </button>
                         <button
                             onClick={handleDeselectAll}
                             className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                         >
-                            Deselect All
+                            {t('DEVICE_SELECTOR.DESELECT_ALL')}
                         </button>
                     </span>
                 </div>

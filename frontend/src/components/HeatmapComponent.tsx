@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { MetricKey, GroupedData } from '../types';
 
@@ -30,6 +31,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     mappings,
     className = ""
 }) => {
+    const { t } = useTranslation();
     const [hoveredCell, setHoveredCell] = React.useState<{ x: number; y: number; value: number | null; device: string; timestamp: string } | null>(null);
     const [mousePosition, setMousePosition] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [hoveredLegendSegment, setHoveredLegendSegment] = React.useState<number | null>(null);
@@ -135,15 +137,28 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     if (devices.length === 0 || uniqueTimestamps.length === 0) {
         return (
             <div className={`text-center text-gray-500 p-8 ${className}`}>
-                No data available for heatmap
+                {t('HEATMAP.NO_DATA')}
             </div>
         );
     }
 
+    const getMetricName = () => {
+        switch (selectedMetric) {
+            case 'hum':
+                return t('METRICS.HUMIDITY');
+            case 'tmp':
+                return t('METRICS.TEMPERATURE');
+            case 'bat':
+                return t('METRICS.BATTERY');
+            default:
+                return '';
+        }
+    };
+
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 relative ${className}`} onMouseMove={handleMouseMove}>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                {selectedMetric === 'hum' ? 'Humidity' : selectedMetric === 'tmp' ? 'Temperature' : 'Battery'} Heatmap
+                {getMetricName()} {t('HEATMAP.TITLE')}
             </h3>
 
             <div className="w-full">
@@ -180,7 +195,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
 
             {/* Color Legend */}
             <div className="mt-4 flex items-center justify-center gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Low</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('HEATMAP.LOW')}</span>
                 <div
                     className="flex h-4 w-32 rounded cursor-crosshair"
                     title={getLegendTitle(hoveredLegendSegment)}
@@ -197,7 +212,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                         />
                     ))}
                 </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">High</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('HEATMAP.HIGH')}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                     ({minValue.toFixed(1)} - {maxValue.toFixed(1)})
                 </span>
@@ -216,7 +231,7 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                     <div className="font-medium">{mappings[hoveredCell.device] || hoveredCell.device}</div>
                     <div className="text-gray-300">{hoveredCell.timestamp}</div>
                     <div className="text-gray-300">
-                        Value: {hoveredCell.value !== null ? hoveredCell.value.toFixed(1) : 'N/A'}
+                        {t('HEATMAP.VALUE')}{hoveredCell.value !== null ? hoveredCell.value.toFixed(1) : 'N/A'}
                     </div>
                 </div>
             )}

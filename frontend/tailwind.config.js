@@ -1,3 +1,6 @@
+import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssTextshadow from "tailwindcss-textshadow";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: "class",
@@ -59,5 +62,5 @@ export default {
       },
     }
   },
-  plugins: [require("tailwindcss-animate"), require('tailwindcss-textshadow')],
+  plugins: [tailwindcssAnimate, tailwindcssTextshadow],
 }

@@ -1,14 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Line } from "react-chartjs-2";
 import { ChartOptions, ScriptableContext, ScriptableLineSegmentContext, ChartDataset } from "chart.js";
 import { MetricKey, GroupedData } from '../types';
 import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
-
-const METRICS = [
-    { key: "hum" as MetricKey, label: "Humidity" },
-    { key: "tmp" as MetricKey, label: "Temperature", borderDash: [5, 5] },
-    { key: "bat" as MetricKey, label: "Battery", borderDash: [2, 2] },
-];
 
 export interface LineChartConfig {
     showLegend: boolean;
@@ -54,7 +49,14 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     lineChartConfig: externalConfig,
     onLineChartConfigChange,
 }) => {
+    const { t } = useTranslation();
     const [internalConfig, setInternalConfig] = useState<LineChartConfig>(defaultLineChartConfig);
+
+    const METRICS = [
+        { key: "hum" as MetricKey, label: t('METRICS.HUMIDITY') },
+        { key: "tmp" as MetricKey, label: t('METRICS.TEMPERATURE'), borderDash: [5, 5] },
+        { key: "bat" as MetricKey, label: t('METRICS.BATTERY'), borderDash: [2, 2] },
+    ];
 
     const isControlled = externalConfig !== undefined;
     const config = isControlled ? externalConfig : internalConfig;
@@ -150,7 +152,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                 .filter(([device]) => selectedDevices.includes(device))
                 .forEach(([device, data]) => {
                     datasets.push({
-                        label: `${mappings[device] || device} - ${metric.label} (Prev)`,
+                        label: `${mappings[device] || device} - ${metric.label} ${t('LINE_CHART.PREVIOUS')}`,
                         data: data[targetMetricKey] as (number | null)[],
                         borderColor: `${colorMap[device]}40`,
                         backgroundColor: `${colorMap[device]}20`,
@@ -207,8 +209,8 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             title: {
                 display: true,
                 text: metricKey
-                    ? `${METRICS.find(m => m.key === metricKey)?.label} Chart${config.extrapolation.enabled ? ' with Forecast' : ''}`
-                    : "Historical Device Readings",
+                    ? `${METRICS.find(m => m.key === metricKey)?.label}${config.extrapolation.enabled ? t('LINE_CHART.WITH_FORECAST') : ''}`
+                    : t('LINE_CHART.HISTORICAL_READINGS'),
                 color: "#9CA3AF",
             },
             tooltip: {
@@ -216,7 +218,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     title: (context) => {
                         const index = context[0].dataIndex;
                         const label = context[0].label;
-                        return index >= originalLength ? `${label} (Forecast)` : label;
+                        return index >= originalLength ? `${label} ${t('LINE_CHART.FORECAST')}` : label;
                     },
                 },
             },
@@ -278,7 +280,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                                 showLegend: e.target.checked
                             })}
                         />
-                        Legend
+                        {t('LINE_CHART.LEGEND')}
                     </label>
                     <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
                         <input
@@ -290,7 +292,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                                 showAxisLabels: e.target.checked
                             })}
                         />
-                        Axis
+                        {t('LINE_CHART.AXIS')}
                     </label>
                     <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
                         <input
@@ -302,13 +304,13 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                                 autoScaleY: e.target.checked
                             })}
                         />
-                        Auto-scale
+                        {t('LINE_CHART.AUTO_SCALE')}
                     </label>
                 </div>
 
                 {config.extrapolation.enabled && totalLength > originalLength && (
                     <div className="text-xs text-gray-600 dark:text-gray-400 italic border-l pl-4 border-gray-300 dark:border-gray-600">
-                        Showing {originalLength} actual + {totalLength - originalLength} forecast points
+                        {t('LINE_CHART.SHOWING')} {originalLength} {t('LINE_CHART.ACTUAL')} + {totalLength - originalLength} {t('LINE_CHART.FORECAST_POINTS')}
                     </div>
                 )}
             </div>
