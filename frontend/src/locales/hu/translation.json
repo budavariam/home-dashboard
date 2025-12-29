@@ -21,7 +21,7 @@
       "LINE1": "Ezt az oldalt használom az otthonomban található BLE szenzorok történeti és aktuális értékeinek megtekintésére.",
       "LINE2": "Az adatokat egy ESP32 eszközzel gyűjtöm.",
       "LINE3": "Olyan szenzorokat használok, mint a",
-      "LINE4": "Az adatokat a következőbe tárolom:",
+      "LINE4": "Az adat tárolásom módja:",
       "SENSOR_NAME": "Xiaomi Mi Hőmérséklet és Páratartalom Mérő 2",
       "THINGER_BUCKET": "Thinger.io adattárolók"
     },
