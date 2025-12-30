@@ -1,9 +1,18 @@
 import type { Preview } from '@storybook/react-vite'
 import { withThemeByClassName } from '@storybook/addon-themes';
+import i18n from './i18n';
 import '../src/index.css';
 
 const preview: Preview = {
+  initialGlobals: {
+    locale: 'en',
+    locales: {
+      en: 'English',
+      hu: 'Magyar',
+    },
+  },
   parameters: {
+    i18n,
     controls: {
       matchers: {
        color: /(background|color)$/i,

@@ -33,6 +33,7 @@
     "react-i18next": "^15.1.3",
     "react-router-dom": "^7.1.1",
     "react-toastify": "^11.0.2",
+    "storybook-react-i18next": "^10.0.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
@@ -76,4 +77,4 @@
     "vite": "^6.0.5",
     "vitest": "^3.2.3"
   }
-} 
+}
