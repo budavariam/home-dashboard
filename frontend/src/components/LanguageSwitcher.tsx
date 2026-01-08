@@ -1,7 +1,16 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
+import { useSensorParams } from './context/ParamContext';
 
 export const LanguageSwitcher = () => {
   const { i18n, t } = useTranslation();
+  const { defaultLanguage } = useSensorParams();
+
+  useEffect(() => {
+    if (defaultLanguage && defaultLanguage !== i18n.language) {
+      i18n.changeLanguage(defaultLanguage);
+    }
+  }, [defaultLanguage, i18n]);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'hu' : 'en';

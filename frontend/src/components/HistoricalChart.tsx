@@ -18,7 +18,7 @@ import { ChartControls } from "./ChartControls";
 import { LineChartComponent } from "./LineChartComponent";
 import { HeatmapComponent } from "./HeatmapComponent";
 import { TableComponent } from "./TableComponent";
-import { formatTimestamp } from "../utils/time";
+import { fixTimestamps, formatTimestamp } from "../utils/time";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -89,21 +89,8 @@ const HistoricalChart: React.FC = () => {
             const r = entry.val.readings;
             r.sort((a, b) => -1 * a.n.localeCompare(b.n));
 
-            // Apply timestamp fallback logic: if reading.ts differs from root ts by more than a day,
-            // use the root ts (this handles cases where devices fail to sync with NTP and default to year 2000)
             const rootTs = entry.ts;
-            r.forEach(reading => {
-                if (reading.ts) {
-                    const readingTs = +new Date(reading.ts);
-                    const diff = Math.abs(rootTs - readingTs);
-                    const oneDayInMs = 86400000; // 24 * 60 * 60 * 1000
-
-                    // If difference is more than a day, use root timestamp converted to ISO string
-                    if (diff > oneDayInMs) {
-                        reading.ts = new Date(rootTs).toISOString();
-                    }
-                }
-            });
+            r.forEach(fixTimestamps(rootTs));
 
             return r;
         }).flat() || [];

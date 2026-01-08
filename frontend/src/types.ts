@@ -8,6 +8,7 @@ export interface SensorReading {
         tmp?: number;  // temperature
     };
     ts: string;  // timestamp in ISO format (e.g., "2025-12-16T12:07:17Z")
+    device?: string;  // device name (optional, for display purposes)
 }
 
 export const DEFAULT_VALUE: SensorReading = Object.freeze({
@@ -30,6 +31,7 @@ export interface ApiParams {
 export interface ApiResponse {
     val: {
         readings: SensorReading[];
+        device?: string;  // optional device name
     };
     ts: number;  // root timestamp in milliseconds since epoch
 }

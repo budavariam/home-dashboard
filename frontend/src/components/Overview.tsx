@@ -1,6 +1,7 @@
 import { SensorReading } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useTranslation } from 'react-i18next';
+import { useSensorParams } from './context/ParamContext';
 
 interface OverviewProps {
   isFetching: boolean;
@@ -54,6 +55,11 @@ const StatBox = ({
 
 const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
   const { t } = useTranslation();
+  const { latestValuesCount, setLatestValuesCount } = useSensorParams();
+
+  // Check if there are multiple devices
+  const devices = new Set(data?.map(sensor => sensor.device).filter(Boolean));
+  const hasMultipleDevices = devices.size > 1;
 
   return (
     <div className="p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -69,15 +75,22 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.map((sensor) => {
+        {data?.map((sensor, index) => {
           const mappedName = mappings[sensor.n] || sensor.n;
           const date = new Date(sensor.ts);
           const formattedTime = date.toLocaleTimeString();
 
           return (
-            <Card key={sensor.n} className="overflow-hidden dark:border-gray-700">
+            <Card key={`${sensor.n}-${index}`} className="overflow-hidden dark:border-gray-700">
               <CardHeader>
-                <CardTitle>{mappedName}</CardTitle>
+                <CardTitle>
+                  {mappedName}
+                  {hasMultipleDevices && sensor.device && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-normal mt-1">
+                      {t('DASHBOARD.DEVICE')}: {sensor.device}
+                    </div>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -113,6 +126,26 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
             </Card>
           );
         })}
+      </div>
+
+      <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <label htmlFor="latestValuesCount" className="block text-sm font-medium mb-2">
+          {t('DASHBOARD.LATEST_VALUES_COUNT')}
+        </label>
+        <select
+          id="latestValuesCount"
+          value={latestValuesCount}
+          onChange={(e) => setLatestValuesCount(Number(e.target.value))}
+          className="block w-full md:w-48 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+        >
+          <option value={1}>1</option>
+          <option value={2}>2</option>
+          <option value={3}>3</option>
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
       </div>
     </div>
   );

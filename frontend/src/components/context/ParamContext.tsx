@@ -9,9 +9,13 @@ interface ParamContextType {
     token: string | null;
     mappings: Record<string, string>;
     apiParams: ApiParams;
+    defaultLanguage: string | null;
+    latestValuesCount: number;
     setToken: (token: string) => void;
     setMappings: (mappings: Record<string, string>) => void;
     setApiParams: (params: ApiParams) => void;
+    setDefaultLanguage: (language: string | null) => void;
+    setLatestValuesCount: (count: number) => void;
 }
 
 const ParamContext = createContext<ParamContextType | undefined>(undefined);
@@ -24,6 +28,13 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [apiParams, setApiParams] = useState<ApiParams>(() => {
         const storedApiParams = localStorage.getItem('apiParams');
         return storedApiParams ? JSON.parse(storedApiParams) : { user: null, bucket: null };
+    });
+    const [defaultLanguage, setDefaultLanguage] = useState<string | null>(
+        localStorage.getItem('defaultLanguage')
+    );
+    const [latestValuesCount, setLatestValuesCount] = useState<number>(() => {
+        const stored = localStorage.getItem('latestValuesCount');
+        return stored ? parseInt(stored, 10) : 1;
     });
 
     useEffect(() => {
@@ -53,12 +64,20 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setApiParams(updatedApiParams);
             localStorage.setItem('apiParams', JSON.stringify(updatedApiParams));
         }
+
+        const defaultLangParam = params.get('defaultLanguage');
+        if (defaultLangParam) {
+            setDefaultLanguage(defaultLangParam);
+            localStorage.setItem('defaultLanguage', defaultLangParam);
+        }
     }, []);
 
     const value = {
         token,
         mappings,
         apiParams,
+        defaultLanguage,
+        latestValuesCount,
         setToken: (newToken: string) => {
             setToken(newToken);
             localStorage.setItem('token', newToken);
@@ -70,6 +89,18 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setApiParams: (newApiParams: ApiParams) => {
             setApiParams(newApiParams);
             localStorage.setItem('apiParams', JSON.stringify(newApiParams));
+        },
+        setDefaultLanguage: (newLanguage: string | null) => {
+            setDefaultLanguage(newLanguage);
+            if (newLanguage) {
+                localStorage.setItem('defaultLanguage', newLanguage);
+            } else {
+                localStorage.removeItem('defaultLanguage');
+            }
+        },
+        setLatestValuesCount: (count: number) => {
+            setLatestValuesCount(count);
+            localStorage.setItem('latestValuesCount', count.toString());
         },
     };
 

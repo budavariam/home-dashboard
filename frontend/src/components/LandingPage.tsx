@@ -1,37 +1,143 @@
-import { useState, useEffect } from 'react';
+import { useReducer, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSensorParams } from './context/ParamContext';
 
+interface MappingEntry {
+    id: string;
+    key: string;
+    value: string;
+}
+
+interface State {
+    showToken: boolean;
+    copied: boolean;
+    localToken: string;
+    localUser: string;
+    localBucket: string;
+    localDefaultLanguage: string;
+    mappingEntries: MappingEntry[];
+}
+
+type Action =
+    | { type: 'SET_SHOW_TOKEN'; payload: boolean }
+    | { type: 'SET_COPIED'; payload: boolean }
+    | { type: 'SET_LOCAL_TOKEN'; payload: string }
+    | { type: 'SET_LOCAL_USER'; payload: string }
+    | { type: 'SET_LOCAL_BUCKET'; payload: string }
+    | { type: 'SET_LOCAL_DEFAULT_LANGUAGE'; payload: string }
+    | { type: 'SET_MAPPING_ENTRIES'; payload: MappingEntry[] }
+    | { type: 'UPDATE_MAPPING_KEY'; payload: { id: string; key: string } }
+    | { type: 'UPDATE_MAPPING_VALUE'; payload: { id: string; value: string } }
+    | { type: 'ADD_MAPPING' }
+    | { type: 'REMOVE_MAPPING'; payload: string }
+    | { type: 'SYNC_FROM_CONTEXT'; payload: { token: string; user: string; bucket: string; defaultLanguage: string; mappings: Record<string, string> } };
+
+const reducer = (state: State, action: Action): State => {
+    switch (action.type) {
+        case 'SET_SHOW_TOKEN':
+            return { ...state, showToken: action.payload };
+        case 'SET_COPIED':
+            return { ...state, copied: action.payload };
+        case 'SET_LOCAL_TOKEN':
+            return { ...state, localToken: action.payload };
+        case 'SET_LOCAL_USER':
+            return { ...state, localUser: action.payload };
+        case 'SET_LOCAL_BUCKET':
+            return { ...state, localBucket: action.payload };
+        case 'SET_LOCAL_DEFAULT_LANGUAGE':
+            return { ...state, localDefaultLanguage: action.payload };
+        case 'SET_MAPPING_ENTRIES':
+            return { ...state, mappingEntries: action.payload };
+        case 'UPDATE_MAPPING_KEY':
+            return {
+                ...state,
+                mappingEntries: state.mappingEntries.map(entry =>
+                    entry.id === action.payload.id ? { ...entry, key: action.payload.key } : entry
+                )
+            };
+        case 'UPDATE_MAPPING_VALUE':
+            return {
+                ...state,
+                mappingEntries: state.mappingEntries.map(entry =>
+                    entry.id === action.payload.id ? { ...entry, value: action.payload.value } : entry
+                )
+            };
+        case 'ADD_MAPPING':
+            return {
+                ...state,
+                mappingEntries: [...state.mappingEntries, { id: Date.now().toString(), key: '', value: '' }]
+            };
+        case 'REMOVE_MAPPING':
+            return {
+                ...state,
+                mappingEntries: state.mappingEntries.filter(entry => entry.id !== action.payload)
+            };
+        case 'SYNC_FROM_CONTEXT':
+            return {
+                ...state,
+                localToken: action.payload.token,
+                localUser: action.payload.user,
+                localBucket: action.payload.bucket,
+                localDefaultLanguage: action.payload.defaultLanguage,
+                mappingEntries: Object.entries(action.payload.mappings).map(([key, value]) => ({
+                    id: Date.now().toString() + Math.random(),
+                    key,
+                    value
+                }))
+            };
+        default:
+            return state;
+    }
+};
+
 function LandingPage() {
     const { t } = useTranslation();
-    const { token, apiParams, mappings } = useSensorParams();
-    const [showToken, setShowToken] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const { token, apiParams, mappings, defaultLanguage } = useSensorParams();
 
-    const [localToken, setLocalToken] = useState(token || '');
-    const [localUser, setLocalUser] = useState(apiParams.user || '');
-    const [localBucket, setLocalBucket] = useState(apiParams.bucket || '');
-    const [localMappings, setLocalMappings] = useState(
-        Object.entries(mappings).map(([key, value]) => `${key}:${value}`).join(';')
-    );
+    const [state, dispatch] = useReducer(reducer, {
+        showToken: false,
+        copied: false,
+        localToken: token || '',
+        localUser: apiParams.user || '',
+        localBucket: apiParams.bucket || '',
+        localDefaultLanguage: defaultLanguage || '',
+        mappingEntries: Object.entries(mappings).length > 0
+            ? Object.entries(mappings).map(([key, value]) => ({
+                id: Date.now().toString() + Math.random(),
+                key,
+                value
+            }))
+            : [{ id: Date.now().toString(), key: '', value: '' }]
+    });
 
     useEffect(() => {
-        setLocalToken(token || '');
-        setLocalUser(apiParams.user || '');
-        setLocalBucket(apiParams.bucket || '');
-        setLocalMappings(
-            Object.entries(mappings).map(([key, value]) => `${key}:${value}`).join(';')
-        );
-    }, [token, apiParams, mappings]);
+        dispatch({
+            type: 'SYNC_FROM_CONTEXT',
+            payload: {
+                token: token || '',
+                user: apiParams.user || '',
+                bucket: apiParams.bucket || '',
+                defaultLanguage: defaultLanguage || '',
+                mappings
+            }
+        });
+    }, [token, apiParams, mappings, defaultLanguage]);
 
     const buildShareUrl = (maskToken = false) => {
         const url = new URL(window.location.href);
         url.search = '';
-        if (localToken) url.searchParams.set('token', maskToken ? '********' : localToken);
-        if (localUser) url.searchParams.set('user', localUser);
-        if (localBucket) url.searchParams.set('bucket', localBucket);
-        if (localMappings) url.searchParams.set('mappings', localMappings);
+        if (state.localToken) url.searchParams.set('token', maskToken ? '********' : state.localToken);
+        if (state.localUser) url.searchParams.set('user', state.localUser);
+        if (state.localBucket) url.searchParams.set('bucket', state.localBucket);
+        if (state.localDefaultLanguage) url.searchParams.set('defaultLanguage', state.localDefaultLanguage);
+
+        const mappingsString = state.mappingEntries
+            .filter(entry => entry.key && entry.value)
+            .map(entry => `${entry.key}:${entry.value}`)
+            .join(';');
+        if (mappingsString) url.searchParams.set('mappings', mappingsString);
+
         return url.toString();
     };
 
@@ -42,8 +148,8 @@ function LandingPage() {
     const handleCopyUrl = async () => {
         try {
             await navigator.clipboard.writeText(buildShareUrl());
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            dispatch({ type: 'SET_COPIED', payload: true });
+            setTimeout(() => dispatch({ type: 'SET_COPIED', payload: false }), 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
         }
@@ -95,18 +201,18 @@ function LandingPage() {
                         </label>
                         <div className="flex items-center space-x-2">
                             <input
-                                type={showToken ? 'text' : 'password'}
+                                type={state.showToken ? 'text' : 'password'}
                                 id="token"
                                 className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                 placeholder={t('LANDING.TRY_APP.TOKEN_PLACEHOLDER')}
-                                value={localToken}
-                                onChange={(e) => setLocalToken(e.target.value)}
+                                value={state.localToken}
+                                onChange={(e) => dispatch({ type: 'SET_LOCAL_TOKEN', payload: e.target.value })}
                             />
                             <button
                                 className="text-sm text-blue-600 dark:text-blue-400 underline"
-                                onClick={() => setShowToken(!showToken)}
+                                onClick={() => dispatch({ type: 'SET_SHOW_TOKEN', payload: !state.showToken })}
                             >
-                                {showToken ? t('LANDING.TRY_APP.HIDE') : t('LANDING.TRY_APP.SHOW')}
+                                {state.showToken ? t('LANDING.TRY_APP.HIDE') : t('LANDING.TRY_APP.SHOW')}
                             </button>
                         </div>
                     </div>
@@ -120,8 +226,8 @@ function LandingPage() {
                             id="user"
                             className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             placeholder={t('LANDING.TRY_APP.USER_PLACEHOLDER')}
-                            value={localUser}
-                            onChange={(e) => setLocalUser(e.target.value)}
+                            value={state.localUser}
+                            onChange={(e) => dispatch({ type: 'SET_LOCAL_USER', payload: e.target.value })}
                         />
                     </div>
 
@@ -134,23 +240,64 @@ function LandingPage() {
                             id="bucket"
                             className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             placeholder={t('LANDING.TRY_APP.BUCKET_PLACEHOLDER')}
-                            value={localBucket}
-                            onChange={(e) => setLocalBucket(e.target.value)}
+                            value={state.localBucket}
+                            onChange={(e) => dispatch({ type: 'SET_LOCAL_BUCKET', payload: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="mappings" className="block text-gray-700 dark:text-gray-300">
+                        <label htmlFor="defaultLanguage" className="block text-gray-700 dark:text-gray-300">
+                            {t('LANDING.TRY_APP.DEFAULT_LANGUAGE_LABEL')}
+                        </label>
+                        <select
+                            id="defaultLanguage"
+                            className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                            value={state.localDefaultLanguage}
+                            onChange={(e) => dispatch({ type: 'SET_LOCAL_DEFAULT_LANGUAGE', payload: e.target.value })}
+                        >
+                            <option value="">{t('LANDING.TRY_APP.DEFAULT_LANGUAGE_OPTION_AUTO')}</option>
+                            <option value="en">{t('LANDING.TRY_APP.DEFAULT_LANGUAGE_OPTION_EN')}</option>
+                            <option value="hu">{t('LANDING.TRY_APP.DEFAULT_LANGUAGE_OPTION_HU')}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-2">
                             {t('LANDING.TRY_APP.MAPPINGS_LABEL')}
                         </label>
-                        <input
-                            type="text"
-                            id="mappings"
-                            className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                            placeholder={t('LANDING.TRY_APP.MAPPINGS_PLACEHOLDER')}
-                            value={localMappings}
-                            onChange={(e) => setLocalMappings(e.target.value)}
-                        />
+                        <div className="space-y-2">
+                            {state.mappingEntries.map((entry) => (
+                                <div key={entry.id} className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                        placeholder={t('LANDING.TRY_APP.MAPPINGS_KEY_PLACEHOLDER')}
+                                        value={entry.key}
+                                        onChange={(e) => dispatch({ type: 'UPDATE_MAPPING_KEY', payload: { id: entry.id, key: e.target.value } })}
+                                    />
+                                    <input
+                                        type="text"
+                                        className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                        placeholder={t('LANDING.TRY_APP.MAPPINGS_VALUE_PLACEHOLDER')}
+                                        value={entry.value}
+                                        onChange={(e) => dispatch({ type: 'UPDATE_MAPPING_VALUE', payload: { id: entry.id, value: e.target.value } })}
+                                    />
+                                    <button
+                                        onClick={() => dispatch({ type: 'REMOVE_MAPPING', payload: entry.id })}
+                                        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none dark:bg-red-500 dark:hover:bg-red-600"
+                                        disabled={state.mappingEntries.length === 1}
+                                    >
+                                        -
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => dispatch({ type: 'ADD_MAPPING' })}
+                                className="w-full py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none dark:bg-green-500 dark:hover:bg-green-600"
+                            >
+                                + {t('LANDING.TRY_APP.MAPPINGS_ADD')}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex gap-2">
@@ -164,7 +311,7 @@ function LandingPage() {
                             onClick={handleCopyUrl}
                             className="flex-1 py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none dark:bg-gray-500 dark:hover:bg-gray-600"
                         >
-                            {copied ? t('LANDING.TRY_APP.COPIED') : t('LANDING.TRY_APP.COPY_URL')}
+                            {state.copied ? t('LANDING.TRY_APP.COPIED') : t('LANDING.TRY_APP.COPY_URL')}
                         </button>
                     </div>
                 </div>
@@ -176,7 +323,7 @@ function LandingPage() {
                     className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded break-words w-full leading-8 block"
                     style={{ wordBreak: 'break-word' }}
                 >
-                    {buildShareUrl(!showToken)}
+                    {buildShareUrl(!state.showToken)}
                 </code>
             </div>
 
