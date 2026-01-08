@@ -18,7 +18,7 @@ import { ChartControls } from "./ChartControls";
 import { LineChartComponent } from "./LineChartComponent";
 import { HeatmapComponent } from "./HeatmapComponent";
 import { TableComponent } from "./TableComponent";
-import { fixTimestamps, formatTimestamp } from "../utils/time";
+import { formatTimestamp } from "../utils/time";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -88,10 +88,6 @@ const HistoricalChart: React.FC = () => {
         const readings = data?.map((entry) => {
             const r = entry.val.readings;
             r.sort((a, b) => -1 * a.n.localeCompare(b.n));
-
-            const rootTs = entry.ts;
-            r.forEach(fixTimestamps(rootTs));
-
             return r;
         }).flat() || [];
 
