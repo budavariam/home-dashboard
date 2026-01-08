@@ -2,6 +2,7 @@ import { SensorReading } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useTranslation } from 'react-i18next';
 import { useSensorParams } from './context/ParamContext';
+import { useMemo } from 'react';
 
 interface OverviewProps {
   isFetching: boolean;
@@ -9,6 +10,75 @@ interface OverviewProps {
   mappings: Record<string, string>;
   data: SensorReading[] | undefined;
 }
+
+interface MergedReading {
+  n: string;
+  device?: string;
+  ts: string;
+  values: {
+    tmp?: number;
+    hum?: number;
+    bat?: number;
+    pow?: number;
+    operating?: number;
+  };
+}
+
+// Merge readings by sensor identifier
+const mergeReadings = (readings: SensorReading[]): MergedReading[] => {
+  const sensorMap = new Map<string, SensorReading[]>();
+
+  // Group readings by sensor ID
+  readings.forEach(reading => {
+    const key = reading.n;
+    if (!sensorMap.has(key)) {
+      sensorMap.set(key, []);
+    }
+    sensorMap.get(key)!.push(reading);
+  });
+
+  // Process each sensor's readings
+  const merged: MergedReading[] = [];
+
+  sensorMap.forEach((sensorReadings, sensorId) => {
+    // Sort by timestamp desc (newest first)
+    sensorReadings.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+
+    const mergedReading: MergedReading = {
+      n: sensorId,
+      device: sensorReadings[0].device,
+      ts: sensorReadings[0].ts,
+      values: {}
+    };
+
+    // Track current value for each field
+    type FieldKey = 'tmp' | 'hum' | 'bat' | 'pow' | 'operating';
+    const fields: FieldKey[] = ['tmp', 'hum', 'bat', 'pow', 'operating'];
+
+    // Process readings from newest to oldest
+    sensorReadings.forEach((reading, index) => {
+      fields.forEach(field => {
+        const newValue = reading.r?.[field];
+
+        if (index === 0) {
+          // First reading (newest)
+          if (newValue !== undefined) {
+            mergedReading.values[field] = newValue;
+          }
+        } else {
+          // Subsequent readings - fill in missing values
+          if (newValue !== undefined && mergedReading.values[field] === undefined) {
+            mergedReading.values[field] = newValue;
+          }
+        }
+      });
+    });
+
+    merged.push(mergedReading);
+  });
+
+  return merged;
+};
 
 const getTemperatureColor = (temp?: number) => {
   if (!temp) return 'bg-gray-100 dark:bg-gray-800';
@@ -57,9 +127,17 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
   const { t } = useTranslation();
   const { latestValuesCount, setLatestValuesCount } = useSensorParams();
 
+  // Merge readings by sensor identifier
+  const mergedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return mergeReadings(data);
+  }, [data]);
+
   // Check if there are multiple devices
-  const devices = new Set(data?.map(sensor => sensor.device).filter(Boolean));
-  const hasMultipleDevices = devices.size > 1;
+  const hasMultipleDevices = useMemo(() => {
+    const devices = new Set(mergedData.map(sensor => sensor.device).filter(Boolean));
+    return devices.size > 1;
+  }, [mergedData]);
 
   return (
     <div className="p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -75,13 +153,13 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.map((sensor, index) => {
+        {mergedData.map((sensor) => {
           const mappedName = mappings[sensor.n] || sensor.n;
           const date = new Date(sensor.ts);
           const formattedTime = date.toLocaleTimeString();
 
           return (
-            <Card key={`${sensor.n}-${index}`} className="overflow-hidden dark:border-gray-700">
+            <Card key={sensor.n} className="overflow-hidden dark:border-gray-700">
               <CardHeader>
                 <CardTitle>
                   {mappedName}
@@ -96,25 +174,25 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
                 <div className="grid grid-cols-2 gap-4">
                   <StatBox
                     label={t('DASHBOARD.TEMPERATURE')}
-                    value={sensor.r?.tmp?.toFixed(1) ?? '?'}
+                    value={sensor.values.tmp?.toFixed(1) ?? '?'}
                     unit="°C"
-                    colorClass={getTemperatureColor(sensor.r?.tmp)}
+                    colorClass={getTemperatureColor(sensor.values.tmp)}
                   />
                   <StatBox
                     label={t('DASHBOARD.HUMIDITY')}
-                    value={sensor.r?.hum?.toFixed(1) ?? '?'}
+                    value={sensor.values.hum?.toFixed(1) ?? '?'}
                     unit="%"
-                    colorClass={getHumidityColor(sensor.r?.hum)}
+                    colorClass={getHumidityColor(sensor.values.hum)}
                   />
                   <StatBox
                     label={t('DASHBOARD.BATTERY')}
-                    value={sensor.r?.bat ?? '?'}
+                    value={sensor.values.bat ?? '?'}
                     unit="%"
-                    colorClass={getBatteryColor(sensor.r?.bat)}
+                    colorClass={getBatteryColor(sensor.values.bat)}
                   />
                   <StatBox
                     label={t('DASHBOARD.POWER')}
-                    value={sensor.r?.pow?.toFixed(3) ?? '?'}
+                    value={sensor.values.pow?.toFixed(3) ?? '?'}
                     unit="V"
                     colorClass="bg-gray-100 dark:bg-gray-800"
                   />
