@@ -16,11 +16,11 @@ interface MergedReading {
   device?: string;
   ts: string;
   values: {
-    tmp?: number;
-    hum?: number;
-    bat?: number;
-    pow?: number;
-    operating?: number;
+    tmp?: { value: number; ts: string };
+    hum?: { value: number; ts: string };
+    bat?: { value: number; ts: string };
+    pow?: { value: number; ts: string };
+    operating?: { value: number; ts: string };
   };
 }
 
@@ -44,10 +44,11 @@ const mergeReadings = (readings: SensorReading[]): MergedReading[] => {
     // Sort by timestamp desc (newest first)
     sensorReadings.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
+    const latestTs = sensorReadings[0].ts;
     const mergedReading: MergedReading = {
       n: sensorId,
       device: sensorReadings[0].device,
-      ts: sensorReadings[0].ts,
+      ts: latestTs,
       values: {}
     };
 
@@ -63,12 +64,12 @@ const mergeReadings = (readings: SensorReading[]): MergedReading[] => {
         if (index === 0) {
           // First reading (newest)
           if (newValue !== undefined) {
-            mergedReading.values[field] = newValue;
+            mergedReading.values[field] = { value: newValue, ts: reading.ts };
           }
         } else {
           // Subsequent readings - fill in missing values
           if (newValue !== undefined && mergedReading.values[field] === undefined) {
-            mergedReading.values[field] = newValue;
+            mergedReading.values[field] = { value: newValue, ts: reading.ts };
           }
         }
       });
@@ -106,11 +107,13 @@ const StatBox = ({
   value,
   unit,
   colorClass,
+  timestamp,
 }: {
   label: string;
   value: string | number;
   unit: string;
   colorClass: string;
+  timestamp?: string;
 }) => (
   <div className={`p-4 rounded-lg ${colorClass}`}>
     <div className="text-3xl font-bold mb-1 dark:text-gray-50 dark:font-semibold">
@@ -120,6 +123,11 @@ const StatBox = ({
     <div className="text-sm opacity-70 dark:opacity-50 dark:text-gray-50 dark:font-semibold">
       {label}
     </div>
+    {timestamp && (
+      <div className="text-xs opacity-60 dark:opacity-40 dark:text-gray-50 mt-1">
+        {new Date(timestamp).toLocaleTimeString()}
+      </div>
+    )}
   </div>
 );
 
@@ -174,27 +182,31 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
                 <div className="grid grid-cols-2 gap-4">
                   <StatBox
                     label={t('DASHBOARD.TEMPERATURE')}
-                    value={sensor.values.tmp?.toFixed(1) ?? '?'}
+                    value={sensor.values.tmp?.value.toFixed(1) ?? '?'}
                     unit="°C"
-                    colorClass={getTemperatureColor(sensor.values.tmp)}
+                    colorClass={getTemperatureColor(sensor.values.tmp?.value)}
+                    timestamp={sensor.values.tmp?.ts !== sensor.ts ? sensor.values.tmp?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.HUMIDITY')}
-                    value={sensor.values.hum?.toFixed(1) ?? '?'}
+                    value={sensor.values.hum?.value.toFixed(1) ?? '?'}
                     unit="%"
-                    colorClass={getHumidityColor(sensor.values.hum)}
+                    colorClass={getHumidityColor(sensor.values.hum?.value)}
+                    timestamp={sensor.values.hum?.ts !== sensor.ts ? sensor.values.hum?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.BATTERY')}
-                    value={sensor.values.bat ?? '?'}
+                    value={sensor.values.bat?.value ?? '?'}
                     unit="%"
-                    colorClass={getBatteryColor(sensor.values.bat)}
+                    colorClass={getBatteryColor(sensor.values.bat?.value)}
+                    timestamp={sensor.values.bat?.ts !== sensor.ts ? sensor.values.bat?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.POWER')}
-                    value={sensor.values.pow?.toFixed(3) ?? '?'}
+                    value={sensor.values.pow?.value.toFixed(3) ?? '?'}
                     unit="V"
                     colorClass="bg-gray-100 dark:bg-gray-800"
+                    timestamp={sensor.values.pow?.ts !== sensor.ts ? sensor.values.pow?.ts : undefined}
                   />
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-4">
