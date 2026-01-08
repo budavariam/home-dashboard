@@ -5,17 +5,26 @@ interface ApiParams {
     bucket: string | null;
 }
 
+interface ColorThresholds {
+    temperature: { cold: number; hot: number };
+    humidity: { low: number; high: number };
+    battery: { low: number; medium: number };
+    voltage: { low: number; medium: number };
+}
+
 interface ParamContextType {
     token: string | null;
     mappings: Record<string, string>;
     apiParams: ApiParams;
     defaultLanguage: string | null;
     latestValuesCount: number;
+    colorThresholds: ColorThresholds;
     setToken: (token: string) => void;
     setMappings: (mappings: Record<string, string>) => void;
     setApiParams: (params: ApiParams) => void;
     setDefaultLanguage: (language: string | null) => void;
     setLatestValuesCount: (count: number) => void;
+    setColorThresholds: (thresholds: ColorThresholds) => void;
 }
 
 const ParamContext = createContext<ParamContextType | undefined>(undefined);
@@ -35,6 +44,15 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [latestValuesCount, setLatestValuesCount] = useState<number>(() => {
         const stored = localStorage.getItem('latestValuesCount');
         return stored ? parseInt(stored, 10) : 1;
+    });
+    const [colorThresholds, setColorThresholds] = useState<ColorThresholds>(() => {
+        const stored = localStorage.getItem('colorThresholds');
+        return stored ? JSON.parse(stored) : {
+            temperature: { cold: 18, hot: 25 },
+            humidity: { low: 30, high: 60 },
+            battery: { low: 20, medium: 50 },
+            voltage: { low: 2.5, medium: 2.8 }
+        };
     });
 
     useEffect(() => {
@@ -78,6 +96,7 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         apiParams,
         defaultLanguage,
         latestValuesCount,
+        colorThresholds,
         setToken: (newToken: string) => {
             setToken(newToken);
             localStorage.setItem('token', newToken);
@@ -102,6 +121,10 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setLatestValuesCount(count);
             localStorage.setItem('latestValuesCount', count.toString());
         },
+        setColorThresholds: (newThresholds: ColorThresholds) => {
+            setColorThresholds(newThresholds);
+            localStorage.setItem('colorThresholds', JSON.stringify(newThresholds));
+        },
     };
 
     return <ParamContext.Provider value={value}>{children}</ParamContext.Provider>;
@@ -114,3 +137,5 @@ export const useSensorParams = () => {
     }
     return context;
 };
+
+export type { ColorThresholds };

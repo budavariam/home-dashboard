@@ -2,7 +2,8 @@ import { SensorReading } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useTranslation } from 'react-i18next';
 import { useSensorParams } from './context/ParamContext';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 interface OverviewProps {
   isFetching: boolean;
@@ -81,24 +82,31 @@ const mergeReadings = (readings: SensorReading[]): MergedReading[] => {
   return merged;
 };
 
-const getTemperatureColor = (temp?: number) => {
+const getTemperatureColor = (temp: number | undefined, cold: number, hot: number) => {
   if (!temp) return 'bg-gray-100 dark:bg-gray-800';
-  if (temp < 18) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
-  if (temp > 25) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
+  if (temp < cold) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+  if (temp > hot) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
   return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
-const getHumidityColor = (humidity?: number) => {
+const getHumidityColor = (humidity: number | undefined, low: number, high: number) => {
   if (!humidity) return 'bg-gray-100 dark:bg-gray-800';
-  if (humidity < 30) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
-  if (humidity > 60) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+  if (humidity < low) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
+  if (humidity > high) return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
   return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
-const getBatteryColor = (battery?: number) => {
+const getBatteryColor = (battery: number | undefined, lowThreshold: number, mediumThreshold: number) => {
   if (!battery) return 'bg-gray-100 dark:bg-gray-800';
-  if (battery < 20) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
-  if (battery < 50) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
+  if (battery < lowThreshold) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
+  if (battery < mediumThreshold) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
+  return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
+};
+
+const getVoltageColor = (voltage: number | undefined, lowThreshold: number, mediumThreshold: number) => {
+  if (!voltage) return 'bg-gray-100 dark:bg-gray-800';
+  if (voltage < lowThreshold) return 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300';
+  if (voltage < mediumThreshold) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300';
   return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300';
 };
 
@@ -133,7 +141,8 @@ const StatBox = ({
 
 const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
   const { t } = useTranslation();
-  const { latestValuesCount, setLatestValuesCount } = useSensorParams();
+  const { latestValuesCount, setLatestValuesCount, colorThresholds, setColorThresholds } = useSensorParams();
+  const [isThresholdsOpen, setIsThresholdsOpen] = useState(false);
 
   // Merge readings by sensor identifier
   const mergedData = useMemo(() => {
@@ -169,10 +178,10 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
           return (
             <Card key={sensor.n} className="overflow-hidden dark:border-gray-700">
               <CardHeader>
-                <CardTitle>
+                <CardTitle className="break-words">
                   {mappedName}
                   {hasMultipleDevices && sensor.device && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 font-normal mt-1">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-normal mt-1 break-words">
                       {t('DASHBOARD.DEVICE')}: {sensor.device}
                     </div>
                   )}
@@ -184,28 +193,28 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
                     label={t('DASHBOARD.TEMPERATURE')}
                     value={sensor.values.tmp?.value.toFixed(1) ?? '?'}
                     unit="°C"
-                    colorClass={getTemperatureColor(sensor.values.tmp?.value)}
+                    colorClass={getTemperatureColor(sensor.values.tmp?.value, colorThresholds.temperature.cold, colorThresholds.temperature.hot)}
                     timestamp={sensor.values.tmp?.ts !== sensor.ts ? sensor.values.tmp?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.HUMIDITY')}
                     value={sensor.values.hum?.value.toFixed(1) ?? '?'}
                     unit="%"
-                    colorClass={getHumidityColor(sensor.values.hum?.value)}
+                    colorClass={getHumidityColor(sensor.values.hum?.value, colorThresholds.humidity.low, colorThresholds.humidity.high)}
                     timestamp={sensor.values.hum?.ts !== sensor.ts ? sensor.values.hum?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.BATTERY')}
                     value={sensor.values.bat?.value ?? '?'}
                     unit="%"
-                    colorClass={getBatteryColor(sensor.values.bat?.value)}
+                    colorClass={getBatteryColor(sensor.values.bat?.value, colorThresholds.battery.low, colorThresholds.battery.medium)}
                     timestamp={sensor.values.bat?.ts !== sensor.ts ? sensor.values.bat?.ts : undefined}
                   />
                   <StatBox
                     label={t('DASHBOARD.POWER')}
                     value={sensor.values.pow?.value.toFixed(3) ?? '?'}
                     unit="V"
-                    colorClass="bg-gray-100 dark:bg-gray-800"
+                    colorClass={getVoltageColor(sensor.values.pow?.value, colorThresholds.voltage.low, colorThresholds.voltage.medium)}
                     timestamp={sensor.values.pow?.ts !== sensor.ts ? sensor.values.pow?.ts : undefined}
                   />
                 </div>
@@ -236,6 +245,168 @@ const Overview = ({ isFetching, data, mappings, refetch }: OverviewProps) => {
           <option value={20}>20</option>
           <option value={50}>50</option>
         </select>
+      </div>
+
+      <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <Collapsible open={isThresholdsOpen} onOpenChange={setIsThresholdsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium mb-2">
+            <span>{t('DASHBOARD.COLOR_THRESHOLDS')}</span>
+            <span className="text-xs">{isThresholdsOpen ? '▲' : '▼'}</span>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="space-y-4 mt-4">
+              {/* Temperature Thresholds */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
+                <h3 className="font-medium text-sm mb-3">{t('DASHBOARD.TEMPERATURE')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="temp-cold" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_COLD')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="temp-cold"
+                      value={colorThresholds.temperature.cold}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        temperature: { ...colorThresholds.temperature, cold: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="temp-hot" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_HOT')} (&gt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="temp-hot"
+                      value={colorThresholds.temperature.hot}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        temperature: { ...colorThresholds.temperature, hot: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Humidity Thresholds */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
+                <h3 className="font-medium text-sm mb-3">{t('DASHBOARD.HUMIDITY')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="hum-low" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_LOW')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="hum-low"
+                      value={colorThresholds.humidity.low}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        humidity: { ...colorThresholds.humidity, low: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="hum-high" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_HIGH')} (&gt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="hum-high"
+                      value={colorThresholds.humidity.high}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        humidity: { ...colorThresholds.humidity, high: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Battery Thresholds */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
+                <h3 className="font-medium text-sm mb-3">{t('DASHBOARD.BATTERY')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="bat-low" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_LOW')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="bat-low"
+                      value={colorThresholds.battery.low}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        battery: { ...colorThresholds.battery, low: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="bat-medium" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_MEDIUM')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      id="bat-medium"
+                      value={colorThresholds.battery.medium}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        battery: { ...colorThresholds.battery, medium: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Voltage Thresholds */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
+                <h3 className="font-medium text-sm mb-3">{t('DASHBOARD.POWER')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="volt-low" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_LOW')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      id="volt-low"
+                      value={colorThresholds.voltage.low}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        voltage: { ...colorThresholds.voltage, low: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="volt-medium" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      {t('DASHBOARD.THRESHOLD_MEDIUM')} (&lt;)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      id="volt-medium"
+                      value={colorThresholds.voltage.medium}
+                      onChange={(e) => setColorThresholds({
+                        ...colorThresholds,
+                        voltage: { ...colorThresholds.voltage, medium: Number(e.target.value) }
+                      })}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );

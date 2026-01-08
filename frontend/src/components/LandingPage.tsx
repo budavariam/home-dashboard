@@ -267,24 +267,24 @@ function LandingPage() {
                         </label>
                         <div className="space-y-2">
                             {state.mappingEntries.map((entry) => (
-                                <div key={entry.id} className="flex items-center space-x-2">
+                                <div key={entry.id} className="flex items-center space-x-2 overflow-x-auto">
                                     <input
                                         type="text"
-                                        className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                        className="flex-1 min-w-0 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                         placeholder={t('LANDING.TRY_APP.MAPPINGS_KEY_PLACEHOLDER')}
                                         value={entry.key}
                                         onChange={(e) => dispatch({ type: 'UPDATE_MAPPING_KEY', payload: { id: entry.id, key: e.target.value } })}
                                     />
                                     <input
                                         type="text"
-                                        className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                        className="flex-1 min-w-0 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                         placeholder={t('LANDING.TRY_APP.MAPPINGS_VALUE_PLACEHOLDER')}
                                         value={entry.value}
                                         onChange={(e) => dispatch({ type: 'UPDATE_MAPPING_VALUE', payload: { id: entry.id, value: e.target.value } })}
                                     />
                                     <button
                                         onClick={() => dispatch({ type: 'REMOVE_MAPPING', payload: entry.id })}
-                                        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none dark:bg-red-500 dark:hover:bg-red-600"
+                                        className="flex-shrink-0 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none dark:bg-red-500 dark:hover:bg-red-600"
                                         disabled={state.mappingEntries.length === 1}
                                     >
                                         -

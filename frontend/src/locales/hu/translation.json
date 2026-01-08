@@ -1,6 +1,7 @@
 {
   "DASHBOARD": {
     "BATTERY": "Töltöttség",
+    "COLOR_THRESHOLDS": "Színkódolási küszöbértékek",
     "DEVICE": "Eszköz",
     "FETCHING": "Adatok lekérése...",
     "HUMIDITY": "Páratartalom",
@@ -9,6 +10,11 @@
     "POWER": "Tápfeszültség",
     "REFRESH": "Frissítés most",
     "TEMPERATURE": "Hőmérséklet",
+    "THRESHOLD_COLD": "Hideg",
+    "THRESHOLD_HOT": "Meleg",
+    "THRESHOLD_LOW": "Alacsony",
+    "THRESHOLD_HIGH": "Magas",
+    "THRESHOLD_MEDIUM": "Közepes",
     "TITLE": "Szenzor irányítópult"
   },
   "FOOTER": {

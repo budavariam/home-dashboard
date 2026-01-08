@@ -1,6 +1,7 @@
 {
   "DASHBOARD": {
     "BATTERY": "Battery",
+    "COLOR_THRESHOLDS": "Color Coding Thresholds",
     "DEVICE": "Device",
     "FETCHING": "Fetching data...",
     "HUMIDITY": "Humidity",
@@ -9,6 +10,11 @@
     "POWER": "Power",
     "REFRESH": "Refresh Now",
     "TEMPERATURE": "Temperature",
+    "THRESHOLD_COLD": "Cold",
+    "THRESHOLD_HOT": "Hot",
+    "THRESHOLD_LOW": "Low",
+    "THRESHOLD_HIGH": "High",
+    "THRESHOLD_MEDIUM": "Medium",
     "TITLE": "Sensor Dashboard"
   },
   "FOOTER": {
