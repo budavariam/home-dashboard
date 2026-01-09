@@ -20,7 +20,9 @@ export const fetchHistoricalData = async (
     user: string | null,
     bucket: string | null,
     token: string | null,
-    compare?: boolean
+    compare?: boolean,
+    enableLimit?: boolean,
+    itemsPerHour?: number
 ): Promise<ApiResponse[]> => {
     let data: ApiResponse[];
 
@@ -41,14 +43,21 @@ export const fetchHistoricalData = async (
 
         const url = `https://backend.thinger.io/v1/users/${user}/buckets/${bucket}/data`;
 
+        const params: Record<string, string | number> = {
+            sort: "desc",
+            min_ts,
+            max_ts
+        };
+
+        // Only add items parameter if limit is enabled
+        if (enableLimit) {
+            const itemsCount = (itemsPerHour || 4) * timeRangeMs / (3600 * 1000);
+            params.items = itemsCount;
+        }
+
         const response = await axios.get<ApiResponse[]>(url, {
             headers: { Authorization: `Bearer ${token}` },
-            params: {
-                sort: "desc",
-                items: 4 * timeRangeMs / (3600 * 1000),
-                min_ts,
-                max_ts
-            }
+            params
         });
 
         if (response.data.length === 0) {

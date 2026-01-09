@@ -127,7 +127,8 @@
   },
   "CHART_CONFIG": {
     "SPLIT_CHARTS": "Split Charts",
-    "ENABLE_FORECAST": "Enable Forecast",
+    "ENABLE_FORECAST": "Forecast",
+    "ENABLE_LIMIT": "Data Limit",
     "OPTIONS": "Options",
     "METHOD": "Method:",
     "METHOD_LINEAR": "Linear",
@@ -137,6 +138,8 @@
     "POINTS_TOOLTIP": "Number of points to forecast",
     "WINDOW_SIZE": "Window Size:",
     "WINDOW_SIZE_TOOLTIP": "Number of historical points to use for forecasting",
+    "ITEMS_PER_HOUR": "Readings/Hour:",
+    "ITEMS_PER_HOUR_TOOLTIP": "Estimated number of data points to fetch per hour",
     "COMPARE_LAST_PERIOD": "Compare last period"
   },
   "TABLE": {

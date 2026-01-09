@@ -66,6 +66,8 @@ const HistoricalChart: React.FC = () => {
         forecastWindowSize: 10,
         compareLastPeriod: false,
         autoScaleY: false,
+        enableLimit: false,
+        itemsPerHour: 4,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
@@ -81,7 +83,12 @@ const HistoricalChart: React.FC = () => {
 
     const chartContainerRef = useRef<HTMLDivElement>(null);
 
-    const { data, isLoading, isError, error, refetch } = useHistoricalData(timeRange, chartConfig.compareLastPeriod);
+    const { data, isLoading, isError, error, refetch } = useHistoricalData(
+        timeRange,
+        chartConfig.compareLastPeriod,
+        chartConfig.enableLimit,
+        chartConfig.itemsPerHour
+    );
     const { mappings } = useSensorParams();
 
     const groupedData: GroupedData = React.useMemo(() => {

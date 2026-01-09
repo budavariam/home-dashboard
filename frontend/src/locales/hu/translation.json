@@ -127,7 +127,8 @@
   },
   "CHART_CONFIG": {
     "SPLIT_CHARTS": "Diagramok szétválasztása",
-    "ENABLE_FORECAST": "Előrejelzés engedélyezése",
+    "ENABLE_FORECAST": "Előrejelzés",
+    "ENABLE_LIMIT": "Adatkorlát",
     "OPTIONS": "Beállítások",
     "METHOD": "Módszer:",
     "METHOD_LINEAR": "Lineáris",
@@ -137,6 +138,8 @@
     "POINTS_TOOLTIP": "Előrejelzendő pontok száma",
     "WINDOW_SIZE": "Ablak mérete:",
     "WINDOW_SIZE_TOOLTIP": "Az előrejelzéshez használt történeti pontok száma",
+    "ITEMS_PER_HOUR": "Mérések/óra:",
+    "ITEMS_PER_HOUR_TOOLTIP": "Becsült adatpontok száma óránként",
     "COMPARE_LAST_PERIOD": "Előző időszak összehasonlítása"
   },
   "TABLE": {

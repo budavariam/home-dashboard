@@ -56,6 +56,8 @@ export interface ChartConfig {
     forecastWindowSize?: number;
     compareLastPeriod?: boolean;
     autoScaleY?: boolean;
+    enableLimit?: boolean;
+    itemsPerHour?: number;
 }
 
 export interface DeviceData {

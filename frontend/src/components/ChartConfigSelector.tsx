@@ -115,6 +115,53 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                     )}
                 </div>
             )}
+
+            <div className="flex relative">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={config.enableLimit ?? true}
+                        onChange={(e) => onChange({
+                            ...config,
+                            enableLimit: e.target.checked,
+                        })}
+                    />
+                    {t('CHART_CONFIG.ENABLE_LIMIT')}
+                </label>
+
+                {config.enableLimit && (
+                    <details className="absolute top-full left-0 mt-1 z-50 group">
+                        <summary className="cursor-pointer list-none">
+                            <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
+                                <span>{t('CHART_CONFIG.OPTIONS')}</span>
+                                <span className="group-open:rotate-180 transition-transform">▼</span>
+                            </div>
+                        </summary>
+                        <div className="mt-1 p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg min-w-[280px] sm:min-w-[320px]">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <label className="text-sm text-gray-700 dark:text-gray-300 min-w-[100px] font-medium">
+                                        {t('CHART_CONFIG.ITEMS_PER_HOUR')}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        className="text-sm border rounded px-2 py-1 w-full sm:w-24 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                        value={config.itemsPerHour || 4}
+                                        min="0.00000001"
+                                        max="1000"
+                                        onChange={(e) => onChange({
+                                            ...config,
+                                            itemsPerHour: parseFloat(e.target.value) || 4,
+                                        })}
+                                        title={t('CHART_CONFIG.ITEMS_PER_HOUR_TOOLTIP')}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                )}
+            </div>
             {viewMode !== 'heatmap' && (
                 <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                     <input
