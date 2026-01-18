@@ -43,6 +43,7 @@ interface RenderViewProps {
 
 const HistoricalChart: React.FC = () => {
     const { t } = useTranslation();
+    const { mappings, measurementsPerHour, measurementsPerHourEnabled } = useSensorParams();
 
     const METRICS = [
         { key: "hum" as MetricKey, label: t('METRICS.HUMIDITY') },
@@ -66,8 +67,8 @@ const HistoricalChart: React.FC = () => {
         forecastWindowSize: 10,
         compareLastPeriod: false,
         autoScaleY: false,
-        enableLimit: false,
-        itemsPerHour: 4,
+        enableLimit: measurementsPerHourEnabled,
+        itemsPerHour: measurementsPerHour,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
@@ -89,7 +90,6 @@ const HistoricalChart: React.FC = () => {
         chartConfig.enableLimit,
         chartConfig.itemsPerHour
     );
-    const { mappings } = useSensorParams();
 
     const groupedData: GroupedData = React.useMemo(() => {
         const readings = data?.map((entry) => {

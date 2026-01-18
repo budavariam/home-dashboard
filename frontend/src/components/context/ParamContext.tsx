@@ -19,12 +19,16 @@ interface ParamContextType {
     defaultLanguage: string | null;
     latestValuesCount: number;
     colorThresholds: ColorThresholds;
+    measurementsPerHour: number;
+    measurementsPerHourEnabled: boolean;
     setToken: (token: string) => void;
     setMappings: (mappings: Record<string, string>) => void;
     setApiParams: (params: ApiParams) => void;
     setDefaultLanguage: (language: string | null) => void;
     setLatestValuesCount: (count: number) => void;
     setColorThresholds: (thresholds: ColorThresholds) => void;
+    setMeasurementsPerHour: (count: number) => void;
+    setMeasurementsPerHourEnabled: (enabled: boolean) => void;
 }
 
 const ParamContext = createContext<ParamContextType | undefined>(undefined);
@@ -53,6 +57,14 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             battery: { low: 20, medium: 50 },
             voltage: { low: 2.5, medium: 2.8 }
         };
+    });
+    const [measurementsPerHour, setMeasurementsPerHour] = useState<number>(() => {
+        const stored = localStorage.getItem('measurementsPerHour');
+        return stored ? parseFloat(stored) : 8;
+    });
+    const [measurementsPerHourEnabled, setMeasurementsPerHourEnabled] = useState<boolean>(() => {
+        const stored = localStorage.getItem('measurementsPerHourEnabled');
+        return stored ? stored === 'true' : true;
     });
 
     useEffect(() => {
@@ -88,6 +100,22 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setDefaultLanguage(defaultLangParam);
             localStorage.setItem('defaultLanguage', defaultLangParam);
         }
+
+        const measurementsPerHourParam = params.get('measurementsPerHour');
+        if (measurementsPerHourParam) {
+            const value = parseFloat(measurementsPerHourParam);
+            if (!isNaN(value) && value > 0) {
+                setMeasurementsPerHour(value);
+                localStorage.setItem('measurementsPerHour', value.toString());
+            }
+        }
+
+        const measurementsPerHourEnabledParam = params.get('measurementsPerHourEnabled');
+        if (measurementsPerHourEnabledParam !== null) {
+            const value = measurementsPerHourEnabledParam === 'true';
+            setMeasurementsPerHourEnabled(value);
+            localStorage.setItem('measurementsPerHourEnabled', value.toString());
+        }
     }, []);
 
     const value = {
@@ -97,6 +125,8 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         defaultLanguage,
         latestValuesCount,
         colorThresholds,
+        measurementsPerHour,
+        measurementsPerHourEnabled,
         setToken: (newToken: string) => {
             setToken(newToken);
             localStorage.setItem('token', newToken);
@@ -124,6 +154,14 @@ export const ParamProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setColorThresholds: (newThresholds: ColorThresholds) => {
             setColorThresholds(newThresholds);
             localStorage.setItem('colorThresholds', JSON.stringify(newThresholds));
+        },
+        setMeasurementsPerHour: (count: number) => {
+            setMeasurementsPerHour(count);
+            localStorage.setItem('measurementsPerHour', count.toString());
+        },
+        setMeasurementsPerHourEnabled: (enabled: boolean) => {
+            setMeasurementsPerHourEnabled(enabled);
+            localStorage.setItem('measurementsPerHourEnabled', enabled.toString());
         },
     };
 

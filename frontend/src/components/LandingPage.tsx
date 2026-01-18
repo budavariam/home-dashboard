@@ -16,6 +16,8 @@ interface State {
     localUser: string;
     localBucket: string;
     localDefaultLanguage: string;
+    localMeasurementsPerHour: number;
+    localMeasurementsPerHourEnabled: boolean;
     mappingEntries: MappingEntry[];
 }
 
@@ -26,12 +28,14 @@ type Action =
     | { type: 'SET_LOCAL_USER'; payload: string }
     | { type: 'SET_LOCAL_BUCKET'; payload: string }
     | { type: 'SET_LOCAL_DEFAULT_LANGUAGE'; payload: string }
+    | { type: 'SET_LOCAL_MEASUREMENTS_PER_HOUR'; payload: number }
+    | { type: 'SET_LOCAL_MEASUREMENTS_PER_HOUR_ENABLED'; payload: boolean }
     | { type: 'SET_MAPPING_ENTRIES'; payload: MappingEntry[] }
     | { type: 'UPDATE_MAPPING_KEY'; payload: { id: string; key: string } }
     | { type: 'UPDATE_MAPPING_VALUE'; payload: { id: string; value: string } }
     | { type: 'ADD_MAPPING' }
     | { type: 'REMOVE_MAPPING'; payload: string }
-    | { type: 'SYNC_FROM_CONTEXT'; payload: { token: string; user: string; bucket: string; defaultLanguage: string; mappings: Record<string, string> } };
+    | { type: 'SYNC_FROM_CONTEXT'; payload: { token: string; user: string; bucket: string; defaultLanguage: string; measurementsPerHour: number; measurementsPerHourEnabled: boolean; mappings: Record<string, string> } };
 
 const reducer = (state: State, action: Action): State => {
     switch (action.type) {
@@ -47,6 +51,10 @@ const reducer = (state: State, action: Action): State => {
             return { ...state, localBucket: action.payload };
         case 'SET_LOCAL_DEFAULT_LANGUAGE':
             return { ...state, localDefaultLanguage: action.payload };
+        case 'SET_LOCAL_MEASUREMENTS_PER_HOUR':
+            return { ...state, localMeasurementsPerHour: action.payload };
+        case 'SET_LOCAL_MEASUREMENTS_PER_HOUR_ENABLED':
+            return { ...state, localMeasurementsPerHourEnabled: action.payload };
         case 'SET_MAPPING_ENTRIES':
             return { ...state, mappingEntries: action.payload };
         case 'UPDATE_MAPPING_KEY':
@@ -80,6 +88,8 @@ const reducer = (state: State, action: Action): State => {
                 localUser: action.payload.user,
                 localBucket: action.payload.bucket,
                 localDefaultLanguage: action.payload.defaultLanguage,
+                localMeasurementsPerHour: action.payload.measurementsPerHour,
+                localMeasurementsPerHourEnabled: action.payload.measurementsPerHourEnabled,
                 mappingEntries: Object.entries(action.payload.mappings).map(([key, value]) => ({
                     id: Date.now().toString() + Math.random(),
                     key,
@@ -93,7 +103,7 @@ const reducer = (state: State, action: Action): State => {
 
 function LandingPage() {
     const { t } = useTranslation();
-    const { token, apiParams, mappings, defaultLanguage } = useSensorParams();
+    const { token, apiParams, mappings, defaultLanguage, measurementsPerHour, measurementsPerHourEnabled } = useSensorParams();
 
     const [state, dispatch] = useReducer(reducer, {
         showToken: false,
@@ -102,6 +112,8 @@ function LandingPage() {
         localUser: apiParams.user || '',
         localBucket: apiParams.bucket || '',
         localDefaultLanguage: defaultLanguage || '',
+        localMeasurementsPerHour: measurementsPerHour,
+        localMeasurementsPerHourEnabled: measurementsPerHourEnabled,
         mappingEntries: Object.entries(mappings).length > 0
             ? Object.entries(mappings).map(([key, value]) => ({
                 id: Date.now().toString() + Math.random(),
@@ -119,10 +131,12 @@ function LandingPage() {
                 user: apiParams.user || '',
                 bucket: apiParams.bucket || '',
                 defaultLanguage: defaultLanguage || '',
+                measurementsPerHour,
+                measurementsPerHourEnabled,
                 mappings
             }
         });
-    }, [token, apiParams, mappings, defaultLanguage]);
+    }, [token, apiParams, mappings, defaultLanguage, measurementsPerHour, measurementsPerHourEnabled]);
 
     const buildShareUrl = (maskToken = false) => {
         const url = new URL(window.location.href);
@@ -131,6 +145,8 @@ function LandingPage() {
         if (state.localUser) url.searchParams.set('user', state.localUser);
         if (state.localBucket) url.searchParams.set('bucket', state.localBucket);
         if (state.localDefaultLanguage) url.searchParams.set('defaultLanguage', state.localDefaultLanguage);
+        url.searchParams.set('measurementsPerHour', state.localMeasurementsPerHour.toString());
+        url.searchParams.set('measurementsPerHourEnabled', state.localMeasurementsPerHourEnabled.toString());
 
         const mappingsString = state.mappingEntries
             .filter(entry => entry.key && entry.value)
@@ -259,6 +275,35 @@ function LandingPage() {
                             <option value="en">{t('LANDING.TRY_APP.DEFAULT_LANGUAGE_OPTION_EN')}</option>
                             <option value="hu">{t('LANDING.TRY_APP.DEFAULT_LANGUAGE_OPTION_HU')}</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label htmlFor="measurementsPerHour" className="block text-gray-700 dark:text-gray-300">
+                            {t('LANDING.TRY_APP.MEASUREMENTS_PER_HOUR_LABEL')}
+                        </label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            id="measurementsPerHour"
+                            className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                            placeholder={t('LANDING.TRY_APP.MEASUREMENTS_PER_HOUR_PLACEHOLDER')}
+                            value={state.localMeasurementsPerHour}
+                            min={0.00000001}
+                            max={1000}
+                            onChange={(e) => dispatch({ type: 'SET_LOCAL_MEASUREMENTS_PER_HOUR', payload: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="flex items-center text-gray-700 dark:text-gray-300">
+                            <input
+                                type="checkbox"
+                                className="mr-2"
+                                checked={state.localMeasurementsPerHourEnabled}
+                                onChange={(e) => dispatch({ type: 'SET_LOCAL_MEASUREMENTS_PER_HOUR_ENABLED', payload: e.target.checked })}
+                            />
+                            <span>{t('LANDING.TRY_APP.MEASUREMENTS_PER_HOUR_ENABLED_LABEL')}</span>
+                        </label>
                     </div>
 
                     <div>

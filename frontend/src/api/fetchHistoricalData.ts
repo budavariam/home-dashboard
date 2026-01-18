@@ -70,7 +70,7 @@ export const fetchHistoricalData = async (
     // Apply fixTimestamps to all readings
     data.forEach(entry => {
         const rootTs = entry.ts;
-        entry.val.readings.forEach(reading => {
+        entry.val.readings?.forEach(reading => {
             fixTimestamps(rootTs)(reading);
         });
     });
