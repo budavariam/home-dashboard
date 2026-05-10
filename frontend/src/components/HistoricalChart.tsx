@@ -219,6 +219,7 @@ const HistoricalChart: React.FC = () => {
                             colorMap={colorMap}
                             metricKey={key}
                             className="mb-6 h-[400px]"
+                            isLoading={isLoading}
                             lineChartConfig={{
                                 showLegend: chartConfig.showLegend,
                                 showAxisLabels: chartConfig.showAxisLabels,
@@ -291,6 +292,7 @@ const HistoricalChart: React.FC = () => {
                         mappings={mappings}
                         colorMap={colorMap}
                         className="h-[400px]"
+                        isLoading={isLoading}
                         lineChartConfig={{
                             showLegend: chartConfig.showLegend,
                             showAxisLabels: chartConfig.showAxisLabels,

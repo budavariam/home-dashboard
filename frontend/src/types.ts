@@ -36,7 +36,7 @@ export interface ApiResponse {
     ts: number;  // root timestamp in milliseconds since epoch
 }
 
-export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w" | "1m";
+export type TimeRange = "1h" | "6h" | "12h" | "24h" | "48h" | "1w" | "2w" | "1m" | "3m" | "1y";
 export type MetricKey = "hum" | "tmp" | "bat";
 export type MetricLabel = string;
 

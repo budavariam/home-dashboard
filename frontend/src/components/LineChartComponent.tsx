@@ -23,6 +23,7 @@ interface LineChartComponentProps {
     className?: string;
     lineChartConfig?: LineChartConfig;
     onLineChartConfigChange?: (config: LineChartConfig) => void;
+    isLoading?: boolean;
 }
 
 const defaultLineChartConfig: LineChartConfig = {
@@ -48,6 +49,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     className = "",
     lineChartConfig: externalConfig,
     onLineChartConfigChange,
+    isLoading = false,
 }) => {
     const { t } = useTranslation();
     const [internalConfig, setInternalConfig] = useState<LineChartConfig>(defaultLineChartConfig);
@@ -174,6 +176,20 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
         ? createDatasets(metricKey)
         : METRICS.filter(m => selectedMetrics[m.key]).flatMap(m => createDatasets(m.key));
 
+    const hasAnyPlottableValue = useMemo(() => {
+        const labelCount = labels.length;
+        if (labelCount === 0) return false;
+        if (datasets.length === 0) return false;
+
+        for (const dataset of datasets) {
+            const data = Array.isArray(dataset.data) ? dataset.data : [];
+            for (const v of data) {
+                if (typeof v === 'number' && Number.isFinite(v)) return true;
+            }
+        }
+        return false;
+    }, [labels.length, datasets]);
+
     const yAxisConfig = useMemo(() => {
         if (!config.autoScaleY) {
             return { beginAtZero: true };
@@ -259,14 +275,26 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     };
 
     return (
-        <div className={`${className} mb-6`}>
-            <Line
-                options={chartOptions}
-                data={{
-                    labels,
-                    datasets,
-                }}
-            />
+        <div className={`${className} mb-6 flex flex-col`}>
+            <div className="min-h-0 flex-1">
+                {!hasAnyPlottableValue ? (
+                    isLoading ? (
+                        <div className="h-full min-h-[280px]" aria-busy="true" />
+                    ) : (
+                        <div className="h-full min-h-[280px] flex items-center justify-center rounded border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/20 text-gray-600 dark:text-gray-300">
+                            {t('LINE_CHART.NO_DATA')}
+                        </div>
+                    )
+                ) : (
+                    <Line
+                        options={chartOptions}
+                        data={{
+                            labels,
+                            datasets,
+                        }}
+                    />
+                )}
+            </div>
 
             <div className="flex gap-4 justify-end mt-2 flex-wrap items-center">
                 <div className="flex gap-2">

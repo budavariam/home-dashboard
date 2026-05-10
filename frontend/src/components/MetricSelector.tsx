@@ -22,7 +22,7 @@ export const MetricSelector: React.FC<MetricSelectorProps> = ({
     ];
 
     return (
-        <div className={`flex gap-2 items-center ${className}`}>
+        <div className={`flex flex-wrap gap-x-4 gap-y-2 items-center max-w-full ${className}`}>
             {METRICS.map(({ key, label }) => (
                 <label key={key} className="text-gray-700 dark:text-gray-300">
                     <input

@@ -211,3 +211,57 @@ export const WithMovingAverageForecast: Story = {
         className: 'h-96 p-4',
     },
 };
+
+export const EmptyData: Story = {
+    args: {
+        groupedData: {},
+        selectedDevices: [],
+        selectedMetrics: {
+            hum: true,
+            tmp: true,
+            bat: false,
+        },
+        isLoading: false,
+        lineChartConfig: {
+            showLegend: true,
+            showAxisLabels: true,
+            autoScaleY: false,
+            extrapolation: {
+                enabled: false,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
+        },
+        mappings: mockMappings,
+        colorMap: mockColorMap,
+        className: 'h-96 p-4',
+    },
+};
+
+export const LoadingNoDataYet: Story = {
+    args: {
+        groupedData: {},
+        selectedDevices: [],
+        selectedMetrics: {
+            hum: true,
+            tmp: true,
+            bat: false,
+        },
+        isLoading: true,
+        lineChartConfig: {
+            showLegend: true,
+            showAxisLabels: true,
+            autoScaleY: false,
+            extrapolation: {
+                enabled: false,
+                method: 'linear',
+                points: 5,
+                windowSize: 10,
+            },
+        },
+        mappings: mockMappings,
+        colorMap: mockColorMap,
+        className: 'h-96 p-4',
+    },
+};

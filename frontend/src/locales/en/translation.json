@@ -128,7 +128,9 @@
     "LAST_2_DAYS": "Last 2 Days",
     "LAST_WEEK": "Last Week",
     "PAST_2_WEEKS": "Past 2 Weeks",
-    "LAST_MONTH": "Last Month"
+    "LAST_MONTH": "Last Month",
+    "LAST_3_MONTHS": "Last 3 Months",
+    "LAST_YEAR": "Last Year"
   },
   "CHART_CONFIG": {
     "SPLIT_CHARTS": "Split Charts",
@@ -172,6 +174,7 @@
   "LINE_CHART": {
     "WITH_FORECAST": " with Forecast",
     "HISTORICAL_READINGS": "Historical Device Readings",
+    "NO_DATA": "No data available for chart",
     "FORECAST": "(Forecast)",
     "PREVIOUS": "(Prev)",
     "LEGEND": "Legend",

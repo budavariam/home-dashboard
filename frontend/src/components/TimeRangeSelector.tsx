@@ -24,6 +24,8 @@ export const TimeRangeSelector: React.FC<TimeRangeSelectorProps> = ({
         { value: "1w", label: t('TIME_RANGE.LAST_WEEK') },
         { value: "2w", label: t('TIME_RANGE.PAST_2_WEEKS') },
         { value: "1m", label: t('TIME_RANGE.LAST_MONTH') },
+        { value: "3m", label: t('TIME_RANGE.LAST_3_MONTHS') },
+        { value: "1y", label: t('TIME_RANGE.LAST_YEAR') },
     ] as const;
 
     return (

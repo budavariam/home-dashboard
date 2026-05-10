@@ -128,7 +128,9 @@
     "LAST_2_DAYS": "Utolsó 2 nap",
     "LAST_WEEK": "Utolsó hét",
     "PAST_2_WEEKS": "Elmúlt 2 hét",
-    "LAST_MONTH": "Utolsó hónap"
+    "LAST_MONTH": "Utolsó hónap",
+    "LAST_3_MONTHS": "Utolsó 3 hónap",
+    "LAST_YEAR": "Utolsó év"
   },
   "CHART_CONFIG": {
     "SPLIT_CHARTS": "Diagramok szétválasztása",
@@ -172,6 +174,7 @@
   "LINE_CHART": {
     "WITH_FORECAST": " előrejelzéssel",
     "HISTORICAL_READINGS": "Történeti eszköz adatok",
+    "NO_DATA": "Nincs elérhető adat a diagramhoz",
     "FORECAST": "(Előrejelzés)",
     "PREVIOUS": "(Előző)",
     "LEGEND": "Jelmagyarázat",
