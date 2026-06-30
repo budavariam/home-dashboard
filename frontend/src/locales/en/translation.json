@@ -185,6 +185,7 @@
     "AUTO_SCALE": "Auto-scale",
     "SHOWING": "Showing",
     "ACTUAL": "actual",
-    "FORECAST_POINTS": "forecast points"
+    "FORECAST_POINTS": "forecast points",
+    "RESET_VIEW": "Reset View"
   }
 }

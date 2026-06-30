@@ -1,9 +1,13 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Line } from "react-chartjs-2";
 import { ChartOptions, ScriptableContext, ScriptableLineSegmentContext, ChartDataset } from "chart.js";
+import zoomPlugin from 'chartjs-plugin-zoom';
+import { Chart } from 'chart.js';
 import { MetricKey, GroupedData } from '../types';
 import { extrapolateGroupedData, ExtrapolationConfig } from '../utils/extrapolation';
+
+Chart.register(zoomPlugin);
 
 export interface LineChartConfig {
     showLegend: boolean;
@@ -55,6 +59,8 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
 }) => {
     const { t } = useTranslation();
     const [internalConfig, setInternalConfig] = useState<LineChartConfig>(defaultLineChartConfig);
+    const chartRef = useRef<import('chart.js').Chart<'line'> | null>(null);
+    const [isZoomed, setIsZoomed] = useState(false);
 
     const METRICS = [
         { key: "hum" as MetricKey, label: t('METRICS.HUMIDITY') },
@@ -240,6 +246,19 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     },
                 },
             },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x',
+                    onPanComplete: () => setIsZoomed(true),
+                },
+                zoom: {
+                    wheel: { enabled: true },
+                    pinch: { enabled: true },
+                    mode: 'x',
+                    onZoomComplete: () => setIsZoomed(true),
+                },
+            },
         },
         scales: {
             x: {
@@ -292,6 +311,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     )
                 ) : (
                     <Line
+                        ref={chartRef}
                         options={chartOptions}
                         data={{
                             labels,
@@ -302,6 +322,17 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
             </div>
 
             <div className="flex gap-4 justify-end mt-2 flex-wrap items-center">
+                {isZoomed && (
+                    <button
+                        className="text-xs px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => {
+                            chartRef.current?.resetZoom();
+                            setIsZoomed(false);
+                        }}
+                    >
+                        {t('LINE_CHART.RESET_VIEW')}
+                    </button>
+                )}
                 <div className="flex gap-2">
                     <label className="text-gray-700 dark:text-gray-300 text-xs flex items-center cursor-pointer">
                         <input

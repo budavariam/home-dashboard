@@ -185,6 +185,7 @@
     "AUTO_SCALE": "Automatikus skálázás",
     "SHOWING": "Megjelenítés",
     "ACTUAL": "tényleges",
-    "FORECAST_POINTS": "előrejelzett pontok"
+    "FORECAST_POINTS": "előrejelzett pontok",
+    "RESET_VIEW": "Nézet visszaállítása"
   }
 }
