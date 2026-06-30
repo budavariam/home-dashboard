@@ -19,6 +19,7 @@ import { LineChartComponent } from "./LineChartComponent";
 import { HeatmapComponent } from "./HeatmapComponent";
 import { TableComponent } from "./TableComponent";
 import { formatTimestamp } from "../utils/time";
+import { augmentWithMissingEntries } from "../utils/missingEntries";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -39,6 +40,7 @@ interface RenderViewProps {
     chartConfig: ChartConfig;
     mappings: Record<string, string>;
     colorMap: Record<string, string>;
+    missingIndices: Set<number>;
 }
 
 const HistoricalChart: React.FC = () => {
@@ -69,6 +71,7 @@ const HistoricalChart: React.FC = () => {
         autoScaleY: false,
         enableLimit: measurementsPerHourEnabled,
         itemsPerHour: measurementsPerHour,
+        detectMissingEntries: false,
     });
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('line');
@@ -134,6 +137,14 @@ const HistoricalChart: React.FC = () => {
 
         return result;
     }, [data]);
+
+    const { augmentedGroupedData, missingIndices } = React.useMemo(() => {
+        if (!chartConfig.detectMissingEntries) {
+            return { augmentedGroupedData: groupedData, missingIndices: new Set<number>() };
+        }
+        const result = augmentWithMissingEntries(groupedData);
+        return { augmentedGroupedData: result.data, missingIndices: result.missingIndices };
+    }, [groupedData, chartConfig.detectMissingEntries]);
 
     useEffect(() => {
         const availableDevices = Object.keys(groupedData);
@@ -202,7 +213,7 @@ const HistoricalChart: React.FC = () => {
     }, []);
 
     const renderSplitView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig, missingIndices } = props;
 
         const activeMetrics = METRICS.filter(({ key }) => selectedMetrics[key]);
 
@@ -220,6 +231,7 @@ const HistoricalChart: React.FC = () => {
                             metricKey={key}
                             className="mb-6 h-[400px]"
                             isLoading={isLoading}
+                            missingIndices={missingIndices}
                             lineChartConfig={{
                                 showLegend: chartConfig.showLegend,
                                 showAxisLabels: chartConfig.showAxisLabels,
@@ -250,6 +262,7 @@ const HistoricalChart: React.FC = () => {
                             selectedMetric={key}
                             mappings={mappings}
                             className="mb-6"
+                            missingIndices={missingIndices}
                         />
                     );
 
@@ -263,6 +276,7 @@ const HistoricalChart: React.FC = () => {
                             mappings={mappings}
                             className="mb-6"
                             splitView={true}
+                            missingIndices={missingIndices}
                             extrapolation={chartConfig.enableExtrapolation ? {
                                 enabled: true,
                                 method: chartConfig.forecastMethod || 'linear',
@@ -280,7 +294,7 @@ const HistoricalChart: React.FC = () => {
     };
 
     const renderCombinedView = (props: RenderViewProps): React.ReactNode => {
-        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig } = props;
+        const { viewMode, groupedData, selectedDevices, selectedMetrics, mappings, colorMap, chartConfig, missingIndices } = props;
 
         switch (viewMode) {
             case 'line':
@@ -293,6 +307,7 @@ const HistoricalChart: React.FC = () => {
                         colorMap={colorMap}
                         className="h-[400px]"
                         isLoading={isLoading}
+                        missingIndices={missingIndices}
                         lineChartConfig={{
                             showLegend: chartConfig.showLegend,
                             showAxisLabels: chartConfig.showAxisLabels,
@@ -332,6 +347,7 @@ const HistoricalChart: React.FC = () => {
                         mappings={mappings}
                         className="mb-6"
                         splitView={false}
+                        missingIndices={missingIndices}
                         extrapolation={chartConfig.enableExtrapolation ? {
                             enabled: true,
                             method: chartConfig.forecastMethod || 'linear',
@@ -351,12 +367,13 @@ const HistoricalChart: React.FC = () => {
         const renderProps: RenderViewProps = {
             viewMode,
             splitCharts: chartConfig.splitCharts,
-            groupedData,
+            groupedData: augmentedGroupedData,
             selectedDevices,
             selectedMetrics,
             chartConfig,
             mappings,
             colorMap,
+            missingIndices,
         };
 
         if (chartConfig.splitCharts) {

@@ -147,7 +147,8 @@
     "WINDOW_SIZE_TOOLTIP": "Az előrejelzéshez használt történeti pontok száma",
     "ITEMS_PER_HOUR": "Mérések/óra:",
     "ITEMS_PER_HOUR_TOOLTIP": "Becsült adatpontok száma óránként",
-    "COMPARE_LAST_PERIOD": "Előző időszak összehasonlítása"
+    "COMPARE_LAST_PERIOD": "Előző időszak összehasonlítása",
+    "DETECT_MISSING_ENTRIES": "Hiányzó bejegyzések észlelése"
   },
   "TABLE": {
     "TITLE": "Adattáblázat",
@@ -157,6 +158,7 @@
     "PREVIOUS": "(Előző)",
     "ACTUAL": "tényleges",
     "FORECAST_ROWS": "előrejelzett sorok",
+    "MISSING_ENTRY": "⚠ Hiányzó bejegyzés",
     "STATS": {
       "MIN": "Min",
       "AVG": "Átlag",
@@ -169,7 +171,8 @@
     "NO_DATA": "Nincs elérhető adat a hőtérképhez",
     "LOW": "Alacsony",
     "HIGH": "Magas",
-    "VALUE": "Érték: "
+    "VALUE": "Érték: ",
+    "MISSING_VALUE": "Hiányzó (kiesés)"
   },
   "LINE_CHART": {
     "WITH_FORECAST": " előrejelzéssel",

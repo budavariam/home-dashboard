@@ -58,6 +58,7 @@ export interface ChartConfig {
     autoScaleY?: boolean;
     enableLimit?: boolean;
     itemsPerHour?: number;
+    detectMissingEntries?: boolean;
 }
 
 export interface DeviceData {

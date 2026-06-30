@@ -24,6 +24,7 @@ interface LineChartComponentProps {
     lineChartConfig?: LineChartConfig;
     onLineChartConfigChange?: (config: LineChartConfig) => void;
     isLoading?: boolean;
+    missingIndices?: Set<number>;
 }
 
 const defaultLineChartConfig: LineChartConfig = {
@@ -50,6 +51,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
     lineChartConfig: externalConfig,
     onLineChartConfigChange,
     isLoading = false,
+    missingIndices,
 }) => {
     const { t } = useTranslation();
     const [internalConfig, setInternalConfig] = useState<LineChartConfig>(defaultLineChartConfig);
@@ -245,6 +247,7 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                     display: config.showAxisLabels,
                     color: (context) => {
                         const index = context.index;
+                        if (missingIndices?.has(index)) return "#F59E0B";
                         return index >= originalLength ? "#60A5FA" : "#9CA3AF";
                     },
                     maxRotation: 45,
@@ -255,10 +258,12 @@ export const LineChartComponent: React.FC<LineChartComponentProps> = ({
                 grid: {
                     color: (context) => {
                         const index = context.index;
+                        if (missingIndices?.has(index)) return "#F59E0B";
                         return index === originalLength ? "#3B82F6" : "#4B5563";
                     },
                     lineWidth: (context) => {
                         const index = context.index;
+                        if (missingIndices?.has(index)) return 2;
                         return index === originalLength ? 2 : 1;
                     },
                 },

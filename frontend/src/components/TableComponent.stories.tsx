@@ -14,6 +14,8 @@ import {
     getDevicesFromGroupedData,
     createExtendedMappings,
 } from '../test-utils';
+import { augmentWithMissingEntries } from '../utils/missingEntries';
+import { GroupedData } from '../types';
 
 const meta: Meta<typeof TableComponent> = {
     title: 'Chart Components/TableComponent',
@@ -325,5 +327,37 @@ export const WithMovingAverageForecast: Story = {
             points: 10,
             windowSize: 20,
         },
+    },
+};
+
+const createTableDataWithGaps = (): GroupedData => {
+    const timestamps = [
+        '01.04 08:00', '01.04 08:30', '01.04 09:00', '01.04 09:30', '01.04 10:00', '01.04 10:30',
+        '01.04 13:00', '01.04 13:30', '01.04 14:00', '01.04 14:30', '01.04 15:00', '01.04 15:30',
+    ];
+    const devices = ['device001', 'device002', 'device003'];
+    const data: GroupedData = {};
+    devices.forEach(device => {
+        data[device] = {
+            hum: timestamps.map((_, i) => 45 + Math.sin(i * 0.5) * 15),
+            tmp: timestamps.map((_, i) => 22 + Math.cos(i * 0.3) * 5),
+            bat: timestamps.map((_, i) => 90 - i * 0.5),
+            timestamps,
+        };
+    });
+    return data;
+};
+
+const _tableGappedResult = augmentWithMissingEntries(createTableDataWithGaps());
+
+export const WithMissingEntriesDetected: Story = {
+    args: {
+        groupedData: _tableGappedResult.data,
+        selectedDevices: ['device001', 'device002', 'device003'],
+        selectedMetric: 'hum',
+        selectedMetrics: { hum: true, tmp: true, bat: false },
+        mappings: mockMappings,
+        splitView: false,
+        missingIndices: _tableGappedResult.missingIndices,
     },
 };

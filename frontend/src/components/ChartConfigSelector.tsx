@@ -175,6 +175,17 @@ export const ChartConfigSelector: React.FC<ChartConfigSelectorProps> = ({
                     {t('CHART_CONFIG.COMPARE_LAST_PERIOD')}
                 </label>
             )}
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={config.detectMissingEntries || false}
+                    onChange={(e) => onChange({
+                        ...config,
+                        detectMissingEntries: e.target.checked,
+                    })}
+                />
+                {t('CHART_CONFIG.DETECT_MISSING_ENTRIES')}
+            </label>
         </div>
     );
 };

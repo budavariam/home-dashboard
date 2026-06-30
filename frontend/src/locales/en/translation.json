@@ -147,7 +147,8 @@
     "WINDOW_SIZE_TOOLTIP": "Number of historical points to use for forecasting",
     "ITEMS_PER_HOUR": "Readings/Hour:",
     "ITEMS_PER_HOUR_TOOLTIP": "Estimated number of data points to fetch per hour",
-    "COMPARE_LAST_PERIOD": "Compare last period"
+    "COMPARE_LAST_PERIOD": "Compare last period",
+    "DETECT_MISSING_ENTRIES": "Detect Missing Entries"
   },
   "TABLE": {
     "TITLE": "Data Table",
@@ -157,6 +158,7 @@
     "PREVIOUS": "(Prev)",
     "ACTUAL": "actual",
     "FORECAST_ROWS": "forecast rows",
+    "MISSING_ENTRY": "⚠ Missing Entry",
     "STATS": {
       "MIN": "Min",
       "AVG": "Avg",
@@ -169,7 +171,8 @@
     "NO_DATA": "No data available for heatmap",
     "LOW": "Low",
     "HIGH": "High",
-    "VALUE": "Value: "
+    "VALUE": "Value: ",
+    "MISSING_VALUE": "Missing (outage)"
   },
   "LINE_CHART": {
     "WITH_FORECAST": " with Forecast",

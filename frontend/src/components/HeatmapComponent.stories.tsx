@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { HeatmapComponent } from './HeatmapComponent';
-import { DeviceData } from '@/types';
+import { DeviceData, GroupedData } from '@/types';
 import { mockMappings } from '../test-utils';
+import { augmentWithMissingEntries } from '../utils/missingEntries';
 
 const meta: Meta<typeof HeatmapComponent> = {
     title: 'Chart Components/HeatmapComponent',
@@ -103,5 +104,35 @@ export const EmptyData: Story = {
         selectedDevices: [],
         selectedMetric: 'hum',
         mappings: {},
+    },
+};
+
+const createHeatmapDataWithGaps = (): GroupedData => {
+    const timestamps = [
+        '01.04 08:00', '01.04 08:30', '01.04 09:00', '01.04 09:30', '01.04 10:00', '01.04 10:30',
+        '01.04 13:00', '01.04 13:30', '01.04 14:00', '01.04 14:30', '01.04 15:00', '01.04 15:30',
+    ];
+    const devices = ['device001', 'device002', 'device003'];
+    const data: GroupedData = {};
+    devices.forEach(device => {
+        data[device] = {
+            hum: timestamps.map((_, i) => 45 + Math.sin(i * 0.5) * 15),
+            tmp: timestamps.map((_, i) => 22 + Math.cos(i * 0.3) * 5),
+            bat: timestamps.map((_, i) => 90 - i * 0.5),
+            timestamps,
+        };
+    });
+    return data;
+};
+
+const _heatmapGappedResult = augmentWithMissingEntries(createHeatmapDataWithGaps());
+
+export const WithMissingEntriesDetected: Story = {
+    args: {
+        groupedData: _heatmapGappedResult.data,
+        selectedDevices: ['device001', 'device002', 'device003'],
+        selectedMetric: 'hum',
+        mappings: mockMappings,
+        missingIndices: _heatmapGappedResult.missingIndices,
     },
 };

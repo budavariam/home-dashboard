@@ -9,6 +9,7 @@ interface HeatmapComponentProps {
     selectedMetric: MetricKey;
     mappings: Record<string, string>;
     className?: string;
+    missingIndices?: Set<number>;
 }
 
 interface HeatmapCell {
@@ -29,12 +30,14 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
     selectedDevices,
     selectedMetric,
     mappings,
-    className = ""
+    className = "",
+    missingIndices,
 }) => {
     const { t } = useTranslation();
     const [hoveredCell, setHoveredCell] = React.useState<{ x: number; y: number; value: number | null; device: string; timestamp: string } | null>(null);
     const [mousePosition, setMousePosition] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [hoveredLegendSegment, setHoveredLegendSegment] = React.useState<number | null>(null);
+    const [hoveredCellIsMissing, setHoveredCellIsMissing] = React.useState(false);
 
     const heatmapData: HeatmapCell[] = React.useMemo(() => {
         const data: HeatmapCell[] = [];
@@ -96,9 +99,10 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
         setMousePosition({ x: e.clientX, y: e.clientY });
     };
 
-    const handleCellHover = (device: string, timestamp: string, value: number | null, e: React.MouseEvent) => {
+    const handleCellHover = (device: string, timestamp: string, value: number | null, e: React.MouseEvent, isMissing: boolean) => {
         setHoveredCell({ x: e.clientX, y: e.clientY, value, device, timestamp });
         setMousePosition({ x: e.clientX, y: e.clientY });
+        setHoveredCellIsMissing(isMissing);
     };
 
     const handleCellLeave = () => {
@@ -181,10 +185,16 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                                             'border-l-2 border-gray-400 border-opacity-50': isNewDay(timestampIndex)
                                         }
                                     )}
-                                    style={{
-                                        backgroundColor: getHeatmapColor(value),
-                                    }}
-                                    onMouseEnter={(e) => handleCellHover(device, uniqueTimestamps[timestampIndex], value, e)}
+                                    style={
+                                        missingIndices?.has(timestampIndex)
+                                            ? {
+                                                backgroundImage: 'repeating-linear-gradient(45deg, #9CA3AF 0, #9CA3AF 3px, #6B7280 3px, #6B7280 8px)',
+                                              }
+                                            : {
+                                                backgroundColor: getHeatmapColor(value),
+                                              }
+                                    }
+                                    onMouseEnter={(e) => handleCellHover(device, uniqueTimestamps[timestampIndex], value, e, missingIndices?.has(timestampIndex) ?? false)}
                                     onMouseLeave={handleCellLeave}
                                 />
                             ))}
@@ -231,7 +241,10 @@ export const HeatmapComponent: React.FC<HeatmapComponentProps> = ({
                     <div className="font-medium">{mappings[hoveredCell.device] || hoveredCell.device}</div>
                     <div className="text-gray-300">{hoveredCell.timestamp}</div>
                     <div className="text-gray-300">
-                        {t('HEATMAP.VALUE')}{hoveredCell.value !== null ? hoveredCell.value.toFixed(1) : 'N/A'}
+                        {hoveredCellIsMissing
+                            ? <span className="text-amber-400">{t('HEATMAP.MISSING_VALUE')}</span>
+                            : (hoveredCell.value !== null ? hoveredCell.value.toFixed(1) : 'N/A')
+                        }
                     </div>
                 </div>
             )}

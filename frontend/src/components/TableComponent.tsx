@@ -13,6 +13,7 @@ interface TableComponentProps {
     splitView?: boolean;
     extrapolation?: ExtrapolationConfig;
     compareLastPeriod?: boolean;
+    missingIndices?: Set<number>;
 }
 
 type SortConfig = {
@@ -32,6 +33,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
     className = "",
     splitView = true,
     compareLastPeriod = false,
+    missingIndices,
 }) => {
     const { t } = useTranslation();
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
@@ -353,17 +355,21 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                     <tbody>
                         {sortedIndices.map((timestampIndex) => {
                             const isExtrapolated = timestampIndex >= originalLength;
+                            const isMissingEntry = missingIndices?.has(timestampIndex) ?? false;
                             return (
                                 <tr
                                     key={timestampIndex}
-                                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 ${isExtrapolated ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                                        }`}
+                                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 ${
+                                        isMissingEntry ? 'bg-amber-50 dark:bg-amber-900/20' :
+                                        isExtrapolated ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                    }`}
                                 >
-                                    <td className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${isExtrapolated
-                                            ? 'text-blue-700 dark:text-blue-300 italic'
-                                            : 'text-gray-700 dark:text-gray-300'
-                                        }`}>
-                                        {isExtrapolated && '📊 '}
+                                    <td className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
+                                        isMissingEntry ? 'text-amber-700 dark:text-amber-300 italic' :
+                                        isExtrapolated ? 'text-blue-700 dark:text-blue-300 italic' :
+                                        'text-gray-700 dark:text-gray-300'
+                                    }`}>
+                                        {isMissingEntry ? `${t('TABLE.MISSING_ENTRY')} ` : isExtrapolated ? '📊 ' : ''}
                                         {uniqueTimestamps[timestampIndex]}
                                     </td>
                                     {devices.map((device) => {
@@ -379,17 +385,18 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                         return (
                                             <React.Fragment key={device}>
                                                 <td
-                                                    className={`px-4 py-2 text-sm text-right ${isExtrapolated
-                                                            ? 'text-blue-700 dark:text-blue-300 italic'
-                                                            : 'text-gray-700 dark:text-gray-300'
-                                                        }`}
+                                                    className={`px-4 py-2 text-sm text-right ${
+                                                        isMissingEntry ? 'text-amber-600 dark:text-amber-400 italic' :
+                                                        isExtrapolated ? 'text-blue-700 dark:text-blue-300 italic' :
+                                                        'text-gray-700 dark:text-gray-300'
+                                                    }`}
                                                     style={{
                                                         fontFamily: 'monospace',
                                                         fontVariantNumeric: 'tabular-nums',
                                                         fontFeatureSettings: '"tnum"'
                                                     }}
                                                 >
-                                                    {displayValue}
+                                                    {isMissingEntry ? '—' : displayValue}
                                                 </td>
                                                 {compareLastPeriod && previousData && (
                                                     <td
@@ -400,7 +407,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
                                                             fontFeatureSettings: '"tnum"'
                                                         }}
                                                     >
-                                                        {previousValue || 'N/A'}
+                                                        {isMissingEntry ? '—' : previousValue || 'N/A'}
                                                     </td>
                                                 )}
                                             </React.Fragment>
