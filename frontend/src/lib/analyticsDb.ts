@@ -144,6 +144,8 @@ export async function getHourlyAvgTemps(
     req.onerror = () => reject(req.error)
   })
 }
+
+export async function getMonthlyAvgTemps(
   year: number,
   sensorNames: string[]
 ): Promise<Record<number, number>> {
