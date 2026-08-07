@@ -178,6 +178,87 @@ export async function getMonthlyAvgTemps(
   })
 }
 
+export async function getDailySensorTemps(
+  year: number,
+  month: number,
+  sensorNames: string[]
+): Promise<Record<string, Record<number, number>>> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly')
+    const index = tx.objectStore(STORE).index('yearMonth')
+    const req = index.openCursor(IDBKeyRange.only([year, month]))
+    const sums: Record<string, Record<number, { sum: number; count: number }>> = {}
+    req.onsuccess = () => {
+      const cursor = req.result
+      if (cursor) {
+        const entry = cursor.value as AnalyticsEntry
+        if (sensorNames.length === 0 || sensorNames.includes(entry.sensorName)) {
+          const s = entry.sensorName
+          if (!sums[s]) sums[s] = {}
+          if (!sums[s][entry.day]) sums[s][entry.day] = { sum: 0, count: 0 }
+          sums[s][entry.day].sum += entry.tmp
+          sums[s][entry.day].count++
+        }
+        cursor.continue()
+      } else {
+        const result: Record<string, Record<number, number>> = {}
+        for (const [sensor, daySums] of Object.entries(sums)) {
+          result[sensor] = {}
+          for (const [day, { sum, count }] of Object.entries(daySums)) {
+            result[sensor][Number(day)] = Math.round((sum / count) * 100) / 100
+          }
+        }
+        resolve(result)
+      }
+    }
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function getHourlySensorTemps(
+  year: number,
+  month: number,
+  day: number,
+  sensorNames: string[]
+): Promise<Record<string, Record<number, number>>> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly')
+    const index = tx.objectStore(STORE).index('yearMonth')
+    const req = index.openCursor(IDBKeyRange.only([year, month]))
+    const sums: Record<string, Record<number, { sum: number; count: number }>> = {}
+    req.onsuccess = () => {
+      const cursor = req.result
+      if (cursor) {
+        const entry = cursor.value as AnalyticsEntry
+        if (
+          entry.day === day &&
+          (sensorNames.length === 0 || sensorNames.includes(entry.sensorName))
+        ) {
+          const s = entry.sensorName
+          const hour = new Date(entry.ts).getUTCHours()
+          if (!sums[s]) sums[s] = {}
+          if (!sums[s][hour]) sums[s][hour] = { sum: 0, count: 0 }
+          sums[s][hour].sum += entry.tmp
+          sums[s][hour].count++
+        }
+        cursor.continue()
+      } else {
+        const result: Record<string, Record<number, number>> = {}
+        for (const [sensor, hourSums] of Object.entries(sums)) {
+          result[sensor] = {}
+          for (const [hour, { sum, count }] of Object.entries(hourSums)) {
+            result[sensor][Number(hour)] = Math.round((sum / count) * 100) / 100
+          }
+        }
+        resolve(result)
+      }
+    }
+    req.onerror = () => reject(req.error)
+  })
+}
+
 export async function getDailyAvgTemps(
   year: number,
   month: number,

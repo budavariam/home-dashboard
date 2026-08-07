@@ -21,6 +21,8 @@
     "HOURLY_BACK": "Vissza a napi nézethez",
     "PREV": "Előző",
     "NEXT": "Következő",
+    "MODE_AGGREGATE": "Összesített",
+    "MODE_PER_SENSOR": "Szenzorönként",
     "SHOW_DELTA": "Különbség mutatása (A − B)",
     "DELTA_HINT": "Pozitív = {{yearA}} melegebb volt; negatív = {{yearB}} volt melegebb",
     "DELTA_LABEL": "{{yearA}} − {{yearB}} (°C)",
@@ -204,7 +206,7 @@
       "MIN": "Min",
       "AVG": "Átlag",
       "MEDIAN": "Medián",
-      "MAX": "Max"
+      "Max": "Max"
     }
   },
   "HEATMAP": {

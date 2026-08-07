@@ -21,6 +21,8 @@
     "HOURLY_BACK": "Back to daily",
     "PREV": "Prev",
     "NEXT": "Next",
+    "MODE_AGGREGATE": "Aggregate",
+    "MODE_PER_SENSOR": "Per Sensor",
     "SHOW_DELTA": "Show Difference (A − B)",
     "DELTA_HINT": "Positive = {{yearA}} was warmer; negative = {{yearB}} was warmer",
     "DELTA_LABEL": "{{yearA}} − {{yearB}} (°C)",

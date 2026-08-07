@@ -17,7 +17,14 @@ import {
 import { Bar, Line } from 'react-chartjs-2'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import { Chart } from 'chart.js'
-import { getDailyAvgTemps, getHourlyAvgTemps, getMonthlyAvgTemps } from '../../lib/analyticsDb'
+import {
+  getDailyAvgTemps,
+  getDailySensorTemps,
+  getHourlyAvgTemps,
+  getHourlySensorTemps,
+  getMonthlyAvgTemps,
+} from '../../lib/analyticsDb'
+import { useSensorParams } from '../context/ParamContext'
 
 ChartJS.register(
   CategoryScale,
@@ -36,6 +43,11 @@ const COLOR_A = '#3b82f6'
 const COLOR_B = '#f97316'
 const COLOR_DELTA_POS = 'rgba(239,68,68,0.7)'
 const COLOR_DELTA_NEG = 'rgba(59,130,246,0.7)'
+const SENSOR_COLORS = [
+  '#3b82f6', '#f97316', '#10b981', '#eab308', '#8b5cf6',
+  '#ef4444', '#84cc16', '#06b6d4', '#d946ef', '#6366f1',
+  '#f59e0b', '#22c55e', '#0ea5e9', '#a855f7', '#ec4899',
+]
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 interface AnalyticsBarChartProps {
@@ -47,41 +59,45 @@ interface AnalyticsBarChartProps {
 // null = monthly overview | { month } = daily | { month, day } = hourly
 type DrilldownState = { month: number; day?: number } | null
 
-function makeLineDatasets(
-  labels: (string | number)[],
-  dataA: (number | null)[],
-  dataB: (number | null)[],
+type SensorMap = Record<string, Record<number, number>>
+
+function makeAggLineDatasets(
+  xValues: number[],
+  dataA: Record<number, number>,
+  dataB: Record<number, number>,
   yearA: number | null,
   yearB: number | null,
   showDelta: boolean,
   canShowDelta: boolean,
-  deltaData: (number | null)[],
   t: (key: string, opts?: Record<string, unknown>) => string
 ): ChartData<'line'> {
   if (showDelta && canShowDelta) {
+    const deltaData = xValues.map((x) => {
+      const a = dataA[x], b = dataB[x]
+      if (a == null || b == null) return null
+      return Math.round((a - b) * 100) / 100
+    })
     return {
-      labels: labels.map(String),
-      datasets: [
-        {
-          label: t('ANALYTICS.DELTA_LABEL', { yearA, yearB }),
-          data: deltaData,
-          borderColor: '#8b5cf6',
-          backgroundColor: deltaData.map((v) =>
-            v == null ? 'transparent' : v >= 0 ? COLOR_DELTA_POS : COLOR_DELTA_NEG
-          ),
-          fill: false,
-          tension: 0.3,
-          pointRadius: 4,
-        },
-      ],
+      labels: xValues.map(String),
+      datasets: [{
+        label: t('ANALYTICS.DELTA_LABEL', { yearA, yearB }),
+        data: deltaData,
+        borderColor: '#8b5cf6',
+        backgroundColor: deltaData.map((v) =>
+          v == null ? 'transparent' : v >= 0 ? COLOR_DELTA_POS : COLOR_DELTA_NEG
+        ),
+        fill: false,
+        tension: 0.3,
+        pointRadius: 4,
+      }],
     }
   }
   return {
-    labels: labels.map(String),
+    labels: xValues.map(String),
     datasets: [
       ...(yearA ? [{
         label: String(yearA),
-        data: dataA,
+        data: xValues.map((x) => dataA[x] ?? null),
         borderColor: COLOR_A,
         backgroundColor: COLOR_A + '33',
         tension: 0.3,
@@ -89,7 +105,7 @@ function makeLineDatasets(
       }] : []),
       ...(yearB ? [{
         label: String(yearB),
-        data: dataB,
+        data: xValues.map((x) => dataB[x] ?? null),
         borderColor: COLOR_B,
         backgroundColor: COLOR_B + '33',
         tension: 0.3,
@@ -99,20 +115,92 @@ function makeLineDatasets(
   }
 }
 
+function makePerSensorLineDatasets(
+  xValues: number[],
+  sensorDataA: SensorMap,
+  sensorDataB: SensorMap,
+  yearA: number | null,
+  yearB: number | null,
+  sensorNames: string[],
+  showDelta: boolean,
+  canShowDelta: boolean,
+  mappings: Record<string, string>
+): ChartData<'line'> {
+  const datasets: ChartData<'line'>['datasets'] = []
+
+  if (showDelta && canShowDelta) {
+    sensorNames.forEach((sensor, idx) => {
+      const color = SENSOR_COLORS[idx % SENSOR_COLORS.length]
+      const label = mappings[sensor] ?? sensor
+      const deltaData = xValues.map((x) => {
+        const a = sensorDataA[sensor]?.[x]
+        const b = sensorDataB[sensor]?.[x]
+        if (a == null || b == null) return null
+        return Math.round((a - b) * 100) / 100
+      })
+      datasets.push({
+        label: `${label} Δ`,
+        data: deltaData,
+        borderColor: color,
+        backgroundColor: color + '66',
+        tension: 0.3,
+        pointRadius: 4,
+      })
+    })
+    return { labels: xValues.map(String), datasets }
+  }
+
+  sensorNames.forEach((sensor, idx) => {
+    const color = SENSOR_COLORS[idx % SENSOR_COLORS.length]
+    const label = mappings[sensor] ?? sensor
+    if (yearA) {
+      datasets.push({
+        label: `${label} (${yearA})`,
+        data: xValues.map((x) => sensorDataA[sensor]?.[x] ?? null),
+        borderColor: color,
+        backgroundColor: color + '33',
+        tension: 0.3,
+        pointRadius: 3,
+        borderDash: [],
+      })
+    }
+    if (yearB) {
+      datasets.push({
+        label: `${label} (${yearB})`,
+        data: xValues.map((x) => sensorDataB[sensor]?.[x] ?? null),
+        borderColor: color,
+        backgroundColor: color + '22',
+        tension: 0.3,
+        pointRadius: 3,
+        borderDash: [5, 5],
+      })
+    }
+  })
+
+  return { labels: xValues.map(String), datasets }
+}
+
 export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
   yearA,
   yearB,
   selectedSensors,
 }) => {
   const { t, i18n } = useTranslation()
+  const { mappings } = useSensorParams()
+
   const [monthlyA, setMonthlyA] = useState<Record<number, number>>({})
   const [monthlyB, setMonthlyB] = useState<Record<number, number>>({})
   const [dailyA, setDailyA] = useState<Record<number, number>>({})
   const [dailyB, setDailyB] = useState<Record<number, number>>({})
+  const [dailySensorA, setDailySensorA] = useState<SensorMap>({})
+  const [dailySensorB, setDailySensorB] = useState<SensorMap>({})
   const [hourlyA, setHourlyA] = useState<Record<number, number>>({})
   const [hourlyB, setHourlyB] = useState<Record<number, number>>({})
+  const [hourlySensorA, setHourlySensorA] = useState<SensorMap>({})
+  const [hourlySensorB, setHourlySensorB] = useState<SensorMap>({})
   const [drilldown, setDrilldown] = useState<DrilldownState>(null)
   const [showDelta, setShowDelta] = useState(false)
+  const [perSensor, setPerSensor] = useState(false)
   const [isMonthlyLoading, setIsMonthlyLoading] = useState(false)
   const [isDailyLoading, setIsDailyLoading] = useState(false)
   const [isHourlyLoading, setIsHourlyLoading] = useState(false)
@@ -139,7 +227,7 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
     ]).then(([a, b]) => { setMonthlyA(a); setMonthlyB(b); setIsMonthlyLoading(false) })
   }, [yearA, yearB, selectedSensors])
 
-  // Daily data when a month is drilled into
+  // Daily data (both aggregated and per-sensor) when a month is drilled into
   useEffect(() => {
     if (!drilldown) return
     setIsDailyLoading(true)
@@ -147,10 +235,16 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
     Promise.all([
       yearA ? getDailyAvgTemps(yearA, month, selectedSensors) : Promise.resolve({}),
       yearB ? getDailyAvgTemps(yearB, month, selectedSensors) : Promise.resolve({}),
-    ]).then(([a, b]) => { setDailyA(a); setDailyB(b); setIsDailyLoading(false) })
+      yearA ? getDailySensorTemps(yearA, month, selectedSensors) : Promise.resolve({}),
+      yearB ? getDailySensorTemps(yearB, month, selectedSensors) : Promise.resolve({}),
+    ]).then(([avgA, avgB, sA, sB]) => {
+      setDailyA(avgA); setDailyB(avgB)
+      setDailySensorA(sA as SensorMap); setDailySensorB(sB as SensorMap)
+      setIsDailyLoading(false)
+    })
   }, [drilldown?.month, yearA, yearB, selectedSensors])
 
-  // Hourly data when a day is drilled into
+  // Hourly data (both aggregated and per-sensor) when a day is drilled into
   useEffect(() => {
     if (!drilldown?.day) return
     setIsHourlyLoading(true)
@@ -158,7 +252,13 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
     Promise.all([
       yearA ? getHourlyAvgTemps(yearA, month, day, selectedSensors) : Promise.resolve({}),
       yearB ? getHourlyAvgTemps(yearB, month, day, selectedSensors) : Promise.resolve({}),
-    ]).then(([a, b]) => { setHourlyA(a); setHourlyB(b); setIsHourlyLoading(false) })
+      yearA ? getHourlySensorTemps(yearA, month, day, selectedSensors) : Promise.resolve({}),
+      yearB ? getHourlySensorTemps(yearB, month, day, selectedSensors) : Promise.resolve({}),
+    ]).then(([avgA, avgB, sA, sB]) => {
+      setHourlyA(avgA); setHourlyB(avgB)
+      setHourlySensorA(sA as SensorMap); setHourlySensorB(sB as SensorMap)
+      setIsHourlyLoading(false)
+    })
   }, [drilldown?.day, drilldown?.month, yearA, yearB, selectedSensors])
 
   const drilldownDays = useMemo(() => {
@@ -168,42 +268,21 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
 
   const canShowDelta = yearA !== null && yearB !== null
 
-  // Daily chart data + delta
-  const dailyDeltaData = useMemo(() =>
-    drilldownDays.map((d) => {
-      const a = dailyA[d], b = dailyB[d]
-      if (a == null || b == null) return null
-      return Math.round((a - b) * 100) / 100
-    }), [dailyA, dailyB, drilldownDays])
-
   const dailyLineData = useMemo(() =>
-    makeLineDatasets(
-      drilldownDays,
-      drilldownDays.map((d) => dailyA[d] ?? null),
-      drilldownDays.map((d) => dailyB[d] ?? null),
-      yearA, yearB, showDelta, canShowDelta, dailyDeltaData, t
-    ), [dailyA, dailyB, drilldownDays, yearA, yearB, showDelta, canShowDelta, dailyDeltaData, t])
-
-  // Hourly chart data + delta
-  const hourlyDeltaData = useMemo(() =>
-    HOURS.map((h) => {
-      const a = hourlyA[h], b = hourlyB[h]
-      if (a == null || b == null) return null
-      return Math.round((a - b) * 100) / 100
-    }), [hourlyA, hourlyB])
+    perSensor
+      ? makePerSensorLineDatasets(drilldownDays, dailySensorA, dailySensorB, yearA, yearB, selectedSensors, showDelta, canShowDelta, mappings)
+      : makeAggLineDatasets(drilldownDays, dailyA, dailyB, yearA, yearB, showDelta, canShowDelta, t),
+    [dailyA, dailyB, dailySensorA, dailySensorB, drilldownDays, yearA, yearB, showDelta, canShowDelta, perSensor, selectedSensors, mappings, t])
 
   const hourlyLineData = useMemo(() =>
-    makeLineDatasets(
-      HOURS,
-      HOURS.map((h) => hourlyA[h] ?? null),
-      HOURS.map((h) => hourlyB[h] ?? null),
-      yearA, yearB, showDelta, canShowDelta, hourlyDeltaData, t
-    ), [hourlyA, hourlyB, yearA, yearB, showDelta, canShowDelta, hourlyDeltaData, t])
+    perSensor
+      ? makePerSensorLineDatasets(HOURS, hourlySensorA, hourlySensorB, yearA, yearB, selectedSensors, showDelta, canShowDelta, mappings)
+      : makeAggLineDatasets(HOURS, hourlyA, hourlyB, yearA, yearB, showDelta, canShowDelta, t),
+    [hourlyA, hourlyB, hourlySensorA, hourlySensorB, yearA, yearB, showDelta, canShowDelta, perSensor, selectedSensors, mappings, t])
 
   const barOptions: ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: true,
-    cursor: 'pointer',
     onClick: (_event, elements) => {
       if (elements.length === 0) return
       setDrilldown({ month: elements[0].index + 1 })
@@ -233,10 +312,7 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
       responsive: true,
       maintainAspectRatio: true,
       onClick: onPointClick
-        ? (_event, elements) => {
-            if (elements.length === 0) return
-            onPointClick(elements[0].index)
-          }
+        ? (_event, elements) => { if (elements.length > 0) onPointClick(elements[0].index) }
         : undefined,
       plugins: {
         legend: { position: 'top' },
@@ -246,7 +322,7 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
             label: (ctx) => {
               const v = ctx.parsed.y
               if (v == null) return ''
-              if (showDelta) {
+              if (showDelta && !perSensor) {
                 const sign = v > 0 ? '+' : ''
                 return t('ANALYTICS.DELTA_TOOLTIP_LABEL', { value: `${sign}${v.toFixed(1)}` })
               }
@@ -267,8 +343,11 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
       scales: {
         x: { title: { display: true, text: xLabel } },
         y: {
-          title: { display: true, text: showDelta ? t('ANALYTICS.DELTA_UNIT') : t('METRICS.TEMPERATURE_UNIT') },
-          grid: showDelta
+          title: {
+            display: true,
+            text: (showDelta && canShowDelta && !perSensor) ? t('ANALYTICS.DELTA_UNIT') : t('METRICS.TEMPERATURE_UNIT'),
+          },
+          grid: (showDelta && canShowDelta && !perSensor)
             ? { color: (ctx) => ctx.tick.value === 0 ? 'rgba(100,100,100,0.5)' : 'rgba(200,200,200,0.15)' }
             : undefined,
         },
@@ -290,38 +369,29 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
         if (day != null) { setDrilldown((d) => d ? { month: d.month, day } : null); setShowDelta(false); setIsZoomed(false) }
       }
     ),
-    [dailyTitle, t, showDelta, drilldownDays])
+    [dailyTitle, t, showDelta, canShowDelta, perSensor, drilldownDays])
 
   const hourlyOptions = useMemo(() =>
     makeLineOptions(hourlyTitle, t('ANALYTICS.HOUR_OF_DAY')),
-    [hourlyTitle, t, showDelta])
+    [hourlyTitle, t, showDelta, canShowDelta, perSensor])
 
-  // Navigation helpers
   const inHourly = drilldown != null && drilldown.day != null
   const inDaily = drilldown != null && drilldown.day == null
 
   function goBack() {
-    if (inHourly) {
-      setDrilldown({ month: drilldown!.month })
-    } else {
-      setDrilldown(null)
-    }
+    if (inHourly) { setDrilldown({ month: drilldown!.month }) }
+    else { setDrilldown(null) }
     setIsZoomed(false)
   }
 
-  // Prev / next for daily view (month navigation)
   function prevMonth() {
     if (!drilldown) return
-    const m = drilldown.month === 1 ? 12 : drilldown.month - 1
-    setDrilldown({ month: m }); setIsZoomed(false)
+    setDrilldown({ month: drilldown.month === 1 ? 12 : drilldown.month - 1 }); setIsZoomed(false)
   }
   function nextMonth() {
     if (!drilldown) return
-    const m = drilldown.month === 12 ? 1 : drilldown.month + 1
-    setDrilldown({ month: m }); setIsZoomed(false)
+    setDrilldown({ month: drilldown.month === 12 ? 1 : drilldown.month + 1 }); setIsZoomed(false)
   }
-
-  // Prev / next for hourly view (day navigation within current month's days)
   function prevDay() {
     if (!drilldown?.day) return
     const idx = drilldownDays.indexOf(drilldown.day)
@@ -336,16 +406,8 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
   const barData: ChartData<'bar'> = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => i + 1)
     const datasets = []
-    if (yearA) datasets.push({
-      label: String(yearA),
-      data: months.map((m) => monthlyA[m] ?? null),
-      backgroundColor: COLOR_A + 'cc', borderColor: COLOR_A, borderWidth: 1, borderRadius: 4,
-    })
-    if (yearB) datasets.push({
-      label: String(yearB),
-      data: months.map((m) => monthlyB[m] ?? null),
-      backgroundColor: COLOR_B + 'cc', borderColor: COLOR_B, borderWidth: 1, borderRadius: 4,
-    })
+    if (yearA) datasets.push({ label: String(yearA), data: months.map((m) => monthlyA[m] ?? null), backgroundColor: COLOR_A + 'cc', borderColor: COLOR_A, borderWidth: 1, borderRadius: 4 })
+    if (yearB) datasets.push({ label: String(yearB), data: months.map((m) => monthlyB[m] ?? null), backgroundColor: COLOR_B + 'cc', borderColor: COLOR_B, borderWidth: 1, borderRadius: 4 })
     return { labels: monthLabels, datasets }
   }, [monthlyA, monthlyB, yearA, yearB, monthLabels])
 
@@ -365,7 +427,6 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
               ← {inHourly ? t('ANALYTICS.HOURLY_BACK') : t('ANALYTICS.DRILLDOWN_BACK')}
             </button>
 
-            {/* Prev / Next */}
             {inDaily && (
               <>
                 <button className={navBtn} onClick={prevMonth}>‹ {t('ANALYTICS.PREV')}</button>
@@ -375,23 +436,26 @@ export const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
             )}
             {inHourly && drilldown.day != null && (
               <>
-                <button
-                  className={navBtn}
-                  disabled={drilldownDays.indexOf(drilldown.day) === 0}
-                  onClick={prevDay}
-                >‹ {t('ANALYTICS.PREV')}</button>
-                <span className="text-sm font-medium px-1">
-                  {fullMonthNames[drilldown.month - 1]} {drilldown.day}
-                </span>
-                <button
-                  className={navBtn}
-                  disabled={drilldownDays.indexOf(drilldown.day) === drilldownDays.length - 1}
-                  onClick={nextDay}
-                >{t('ANALYTICS.NEXT')} ›</button>
+                <button className={navBtn} disabled={drilldownDays.indexOf(drilldown.day) === 0} onClick={prevDay}>‹ {t('ANALYTICS.PREV')}</button>
+                <span className="text-sm font-medium px-1">{fullMonthNames[drilldown.month - 1]} {drilldown.day}</span>
+                <button className={navBtn} disabled={drilldownDays.indexOf(drilldown.day) === drilldownDays.length - 1} onClick={nextDay}>{t('ANALYTICS.NEXT')} ›</button>
               </>
             )}
 
-            {/* Delta toggle */}
+            {/* Per-sensor toggle */}
+            <button
+              aria-pressed={perSensor}
+              className={`text-sm px-3 py-1.5 rounded transition-colors ${
+                perSensor
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+              onClick={() => setPerSensor((v) => !v)}
+            >
+              {perSensor ? t('ANALYTICS.MODE_PER_SENSOR') : t('ANALYTICS.MODE_AGGREGATE')}
+            </button>
+
+            {/* Delta toggle — disabled in per-sensor mode only when one year is missing */}
             <button
               disabled={!canShowDelta}
               aria-pressed={showDelta}
