@@ -5,6 +5,7 @@ import { useSensorParams } from './components/context/ParamContext';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
 import SensorDataPage from './pages/SensorDataPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import { useMockData } from './components/context/MockDataContext';
 
 // Protected route wrapper component
@@ -53,6 +54,10 @@ export const router = createHashRouter([
                 element: (
                     <SensorDataPage />
                 ),
+            },
+            {
+                path: 'analytics',
+                element: <AnalyticsPage />,
             },
         ],
     },

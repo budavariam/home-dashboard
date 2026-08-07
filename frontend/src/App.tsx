@@ -60,6 +60,16 @@ export const App = () => {
                                 {t('NAV.MOCK')}
                             </NavLink>
                         </li>
+                        <li className="flex-shrink-0">
+                            <NavLink
+                                to="analytics"
+                                className={({ isActive }: {isActive: boolean}) =>
+                                    isActive ? 'text-blue-400' : 'hover:text-blue-400'
+                                }
+                            >
+                                {t('NAV.ANALYTICS')}
+                            </NavLink>
+                        </li>
                     </ul>
                     <div className="flex-shrink-0 ml-auto">
                         <LanguageSwitcher />
