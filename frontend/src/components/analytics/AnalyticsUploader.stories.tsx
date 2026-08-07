@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn } from '@storybook/test'
 import { AnalyticsUploader } from './AnalyticsUploader'
 
 const meta: Meta<typeof AnalyticsUploader> = {
@@ -10,8 +9,8 @@ const meta: Meta<typeof AnalyticsUploader> = {
     },
     tags: ['autodocs'],
     args: {
-        onUpload: fn(),
-        onClear: fn(),
+        onUpload: async () => {},
+        onClear: () => {},
     },
 }
 

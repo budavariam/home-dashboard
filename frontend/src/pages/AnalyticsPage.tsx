@@ -47,7 +47,7 @@ const AnalyticsPage: React.FC = () => {
 
   const handleUpload = async (file: File) => {
     if (entryCount > 0) {
-      if (!window.confirm(t('ANALYTICS.UPLOAD_REPLACE_CONFIRM', { count: entryCount.toLocaleString() }))) return
+      if (!window.confirm(t('ANALYTICS.UPLOAD_REPLACE_CONFIRM', { total: entryCount.toLocaleString() }))) return
       await clearAnalyticsData()
       setEntryCount(0)
       setYearA(null)
@@ -76,7 +76,7 @@ const AnalyticsPage: React.FC = () => {
       }
 
       await storeAnalyticsEntries(entries)
-      toast.success(t('ANALYTICS.UPLOAD_SUCCESS', { count: entries.length.toLocaleString() }))
+      toast.success(t('ANALYTICS.UPLOAD_SUCCESS', { total: entries.length.toLocaleString() }))
       await loadMetadata()
     } catch (e) {
       console.error(e)

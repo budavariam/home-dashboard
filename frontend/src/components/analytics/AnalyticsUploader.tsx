@@ -72,7 +72,7 @@ export const AnalyticsUploader: React.FC<AnalyticsUploaderProps> = ({
       {entryCount > 0 && (
         <div className="mt-3 flex items-center justify-between">
           <span className="text-sm text-green-600 dark:text-green-400">
-            {t('ANALYTICS.DATA_LOADED', { count: entryCount.toLocaleString() })}
+            {t('ANALYTICS.DATA_LOADED', { total: entryCount.toLocaleString() })}
           </span>
           <button
             className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400 underline"
