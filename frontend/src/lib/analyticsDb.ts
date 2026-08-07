@@ -107,7 +107,43 @@ export async function getAnalyticsSensors(): Promise<string[]> {
   })
 }
 
-export async function getMonthlyAvgTemps(
+export async function getHourlyAvgTemps(
+  year: number,
+  month: number,
+  day: number,
+  sensorNames: string[]
+): Promise<Record<number, number>> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly')
+    const index = tx.objectStore(STORE).index('yearMonth')
+    const req = index.openCursor(IDBKeyRange.only([year, month]))
+    const hourSums: Record<number, { sum: number; count: number }> = {}
+    req.onsuccess = () => {
+      const cursor = req.result
+      if (cursor) {
+        const entry = cursor.value as AnalyticsEntry
+        if (
+          entry.day === day &&
+          (sensorNames.length === 0 || sensorNames.includes(entry.sensorName))
+        ) {
+          const hour = new Date(entry.ts).getUTCHours()
+          if (!hourSums[hour]) hourSums[hour] = { sum: 0, count: 0 }
+          hourSums[hour].sum += entry.tmp
+          hourSums[hour].count++
+        }
+        cursor.continue()
+      } else {
+        const result: Record<number, number> = {}
+        for (const [h, { sum, count }] of Object.entries(hourSums)) {
+          result[Number(h)] = Math.round((sum / count) * 100) / 100
+        }
+        resolve(result)
+      }
+    }
+    req.onerror = () => reject(req.error)
+  })
+}
   year: number,
   sensorNames: string[]
 ): Promise<Record<number, number>> {
